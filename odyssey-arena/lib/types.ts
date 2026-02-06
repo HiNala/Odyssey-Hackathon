@@ -19,15 +19,25 @@ export interface OdysseyInteractOptions {
 }
 
 // Game state types
+export type StatusEffect = {
+  type: 'burning' | 'frozen' | 'powered' | 'weakened' | 'shielded'
+  duration: number // turns remaining
+  power: number // effect strength
+}
+
 export interface Character {
   name: string;
   description: string;
   archetype: string;
   stats: {
-    power: number;
+    power: number; // Acts as HP
     defense: number;
     energy: number;
+    actionPoints: number; // NEW: 3 max per turn for strategic choices
   };
+  statusEffects: StatusEffect[]; // NEW: Active status effects
+  comboCount: number; // NEW: Track consecutive similar actions
+  lastAction: string | null; // NEW: For combo system
 }
 
 export interface World {
@@ -60,6 +70,30 @@ export type GameEvent = {
 }
 
 export type BattleLog = GameEvent[];
+
+export type ActionType = 'quickAttack' | 'heavyAttack' | 'special' | 'defend' | 'powerUp' | 'taunt';
+
+export type ActionCost = {
+  quickAttack: 1
+  heavyAttack: 2
+  special: 3
+  defend: 1
+  powerUp: 2
+  taunt: 1
+}
+
+export type BattleResult = {
+  winner: 1 | 2 | null
+  condition: 'knockout' | 'timeout' | 'surrender'
+  turnsPlayed: number
+  finalScores: { player1: number; player2: number }
+}
+
+export type DamageResult = {
+  damage: number
+  isCritical: boolean
+  comboBonus: number
+}
 
 export interface PlayerStats {
   power: number;
