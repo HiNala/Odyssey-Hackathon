@@ -10,6 +10,8 @@ interface OdysseyStreamProps {
   status?: ConnectionStatus;
   className?: string;
   isActive?: boolean;
+  demoMode?: boolean;
+  playerName?: string;
 }
 
 /**
@@ -22,6 +24,8 @@ export const OdysseyStream = memo(function OdysseyStream({
   status = 'disconnected',
   className = '',
   isActive = false,
+  demoMode = false,
+  playerName,
 }: OdysseyStreamProps) {
   const videoRef = useRef<HTMLVideoElement>(null);
 
@@ -77,8 +81,23 @@ export const OdysseyStream = memo(function OdysseyStream({
             transition={{ duration: 0.3 }}
             className="absolute inset-0 flex flex-col items-center justify-center gap-3"
           >
-            {/* Disconnected / Idle */}
-            {(status === 'disconnected' || (!isActive && !mediaStream)) && (
+            {/* Demo Mode — stylish placeholder instead of connection status */}
+            {demoMode && (
+              <div className="text-center space-y-3">
+                <div className="text-5xl opacity-30 animate-float select-none">
+                  {playerName?.toLowerCase().includes('samurai') || playerName?.toLowerCase().includes('knight') ? '\u2694\uFE0F' :
+                   playerName?.toLowerCase().includes('assassin') || playerName?.toLowerCase().includes('shadow') ? '\uD83D\uDDE1\uFE0F' :
+                   playerName?.toLowerCase().includes('dragon') || playerName?.toLowerCase().includes('mage') ? '\uD83D\uDD2E' :
+                   playerName?.toLowerCase().includes('valkyrie') || playerName?.toLowerCase().includes('guardian') ? '\uD83D\uDEE1\uFE0F' :
+                   playerName?.toLowerCase().includes('titan') || playerName?.toLowerCase().includes('volcanic') ? '\uD83C\uDF0B' :
+                   playerName?.toLowerCase().includes('hacker') || playerName?.toLowerCase().includes('cyber') ? '\uD83D\uDCBB' : '\uD83C\uDFAD'}
+                </div>
+                <div className="text-white/30 text-xs font-medium">Demo Mode</div>
+              </div>
+            )}
+
+            {/* Disconnected / Idle (non-demo) */}
+            {!demoMode && (status === 'disconnected' || (!isActive && !mediaStream)) && (
               <div className="text-center space-y-2">
                 <div className="w-12 h-12 rounded-full bg-white/10 flex items-center justify-center mx-auto">
                   <svg
@@ -100,7 +119,7 @@ export const OdysseyStream = memo(function OdysseyStream({
             )}
 
             {/* Connecting / Authenticating */}
-            {(status === 'connecting' || status === 'authenticating' || status === 'reconnecting') && (
+            {!demoMode && (status === 'connecting' || status === 'authenticating' || status === 'reconnecting') && (
               <div className="text-center space-y-3">
                 <div className="w-10 h-10 border-3 border-white/20 border-t-white/70 rounded-full animate-spin mx-auto" />
                 <StatusBadge
@@ -117,15 +136,15 @@ export const OdysseyStream = memo(function OdysseyStream({
             )}
 
             {/* Connected but not streaming yet */}
-            {status === 'connected' && isActive && !mediaStream && (
+            {!demoMode && status === 'connected' && isActive && !mediaStream && (
               <div className="text-center space-y-3">
                 <div className="w-10 h-10 border-3 border-white/20 border-t-emerald-400 rounded-full animate-spin mx-auto" />
                 <StatusBadge text="Starting stream..." color="emerald" />
               </div>
             )}
 
-            {/* Error State */}
-            {(status === 'error' || status === 'failed') && (
+            {/* Error State (non-demo) */}
+            {!demoMode && (status === 'error' || status === 'failed') && (
               <div className="text-center space-y-2">
                 <div className="w-12 h-12 rounded-full bg-red-500/20 flex items-center justify-center mx-auto">
                   <svg

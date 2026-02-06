@@ -45,9 +45,9 @@ export function useGameFlow() {
     dispatch({ type: 'CONNECT' });
   }, [state.phase, dispatch]);
 
-  // ── Submit Character Setup ─────────────────────────────────────
+  // ── Submit Character Setup (supports optional image for image-to-video) ──
   const submitCharacter = useCallback(
-    async (player: 1 | 2, character: string, world: string) => {
+    async (player: 1 | 2, character: string, world: string, image?: File | Blob) => {
       dispatch({ type: 'SET_CHARACTER', player, character, world });
       dispatch({ type: 'SET_PROCESSING', processing: true });
 
@@ -64,7 +64,10 @@ export function useGameFlow() {
 
       try {
         // Start a short preview stream so the player sees their character
-        const streamId = await odyssey.startStream(prompt);
+        // If image is provided, use image-to-video mode (per Odyssey SDK docs)
+        const streamId = image
+          ? await odyssey.startStream({ prompt, image })
+          : await odyssey.startStream(prompt);
         dispatch({ type: 'START_STREAM', player, streamId });
 
         // Let it run briefly to establish the scene

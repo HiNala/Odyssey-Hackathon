@@ -39,10 +39,17 @@ export interface GameStats {
   lastPlayed: number;
 }
 
+export interface TestScenario {
+  player1: { character: string; world: string };
+  player2: { character: string; world: string };
+  savedAt: number;
+}
+
 const STORAGE_KEYS = {
   BATTLE_HISTORY: 'odyssey_arena_battle_history',
   GAME_STATS: 'odyssey_arena_stats',
   LAST_CHARACTERS: 'odyssey_arena_last_characters',
+  TEST_SCENARIO: 'odyssey_arena_test_scenario',
 } as const;
 
 // ─── Battle History ────────────────────────────────────────────────
@@ -162,6 +169,27 @@ export function getLastCharacters(): SavedCharacters {
   }
 }
 
+// ─── Test Scenario (repeatable setup) ───────────────────────────────
+
+export function saveTestScenario(scenario: TestScenario): void {
+  try {
+    localStorage.setItem(STORAGE_KEYS.TEST_SCENARIO, JSON.stringify(scenario));
+    console.log('🧪 Test scenario saved');
+  } catch (error) {
+    console.warn('Failed to save test scenario:', error);
+  }
+}
+
+export function getTestScenario(): TestScenario | null {
+  try {
+    const stored = localStorage.getItem(STORAGE_KEYS.TEST_SCENARIO);
+    return stored ? JSON.parse(stored) : null;
+  } catch (error) {
+    console.warn('Failed to load test scenario:', error);
+    return null;
+  }
+}
+
 // ─── Export All ────────────────────────────────────────────────────
 
 export const Storage = {
@@ -178,4 +206,8 @@ export const Storage = {
   // Characters
   saveLastCharacters,
   getLastCharacters,
+
+  // Test scenario
+  saveTestScenario,
+  getTestScenario,
 } as const;

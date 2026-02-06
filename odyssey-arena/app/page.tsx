@@ -1,7 +1,7 @@
 'use client';
 
 import { useCallback, useEffect, useMemo } from 'react';
-import { motion, AnimatePresence, useAnimationControls } from 'framer-motion';
+import { motion, AnimatePresence } from 'framer-motion';
 import { ArenaBackground } from '@/components/ArenaBackground';
 import { PhoneFrame } from '@/components/PhoneFrame';
 import { OdysseyStream } from '@/components/OdysseyStream';
@@ -12,7 +12,7 @@ import { SetupForm } from '@/components/SetupForm';
 import { VictoryOverlay } from '@/components/VictoryOverlay';
 import { DamagePopup } from '@/components/DamagePopup';
 import { useGameFlow } from '@/hooks/useGameFlow';
-import { arenaVariants, shakeVariants } from '@/lib/animations';
+import { arenaVariants } from '@/lib/animations';
 
 export default function ArenaPage() {
   const {
@@ -29,8 +29,6 @@ export default function ArenaPage() {
 
   const { phase, players, activePlayer, winner, isProcessing } = state;
   const [p1, p2] = players;
-  const shakeControls = useAnimationControls();
-
   // Start battle stream when entering battle phase (skip in demo mode)
   useEffect(() => {
     if (phase === 'battle' && !isDemoMode && !p1.isStreaming && !p2.isStreaming) {
@@ -38,18 +36,8 @@ export default function ArenaPage() {
     }
   }, [phase, isDemoMode, p1.isStreaming, p2.isStreaming, startBattleStream]);
 
-  // Trigger shake on critical/strong events
-  const latestEvent = state.eventLog[state.eventLog.length - 1];
-  useEffect(() => {
-    if (!latestEvent) return;
-    if (latestEvent.impactType === 'critical') {
-      shakeControls.start('shakeHard');
-    } else if (latestEvent.impactType === 'strong') {
-      shakeControls.start('shake');
-    }
-  }, [latestEvent, shakeControls]);
-
   // Compute damage popup data from latest event
+  const latestEvent = state.eventLog[state.eventLog.length - 1];
   const damagePopup = useMemo(() => {
     if (!latestEvent) return { p1: null, p2: null, key: '' };
     const p1m = latestEvent.statChanges.player1?.momentum ?? 0;
@@ -70,10 +58,10 @@ export default function ArenaPage() {
     [submitAction]
   );
 
-  // Handle character setup submission
+  // Handle character setup submission (with optional image for image-to-video)
   const handleSetupSubmit = useCallback(
-    (character: string, world: string) => {
-      submitCharacter(state.setupPlayer, character, world);
+    (character: string, world: string, image?: File) => {
+      submitCharacter(state.setupPlayer, character, world, image);
     },
     [submitCharacter, state.setupPlayer]
   );
@@ -165,9 +153,11 @@ export default function ArenaPage() {
               {/* Setup Form (center stage) */}
               <div className="w-full max-w-md">
                 <SetupForm
+                  key={state.setupPlayer}
                   playerId={state.setupPlayer}
                   onSubmit={handleSetupSubmit}
                   isProcessing={isProcessing}
+                  usedCharacter={state.setupPlayer === 2 ? p1.character : undefined}
                 />
                 {/* Progress indicator */}
                 <div className="flex justify-center gap-2 mt-4">
@@ -227,14 +217,9 @@ export default function ArenaPage() {
               exit={{ opacity: 0 }}
               className="flex-1 flex flex-col"
             >
-              <motion.div
-                variants={shakeVariants}
-                animate={shakeControls}
-                initial="idle"
-                className="flex-1 flex flex-col lg:flex-row items-center justify-center gap-4 lg:gap-6 overflow-auto"
-              >
+              <motion.div className="flex-1 w-full grid grid-cols-1 lg:grid-cols-[minmax(0,1fr)_minmax(0,420px)_minmax(0,1fr)] items-center gap-4 lg:gap-6">
                 {/* Player 1 Phone */}
-                <div className="relative">
+                <div className="relative lg:justify-self-end">
                   <PhoneFrame
                     side="left"
                     playerName={p1.character || p1.name}
@@ -255,12 +240,12 @@ export default function ArenaPage() {
                 </div>
 
                 {/* Center HUD */}
-                <div className="order-first lg:order-0 w-full lg:w-auto">
+                <div className="order-first lg:order-none w-full lg:w-auto">
                   <CenterHUD state={state} />
                 </div>
 
                 {/* Player 2 Phone */}
-                <div className="relative">
+                <div className="relative lg:justify-self-start">
                   <PhoneFrame
                     side="right"
                     playerName={p2.character || p2.name}

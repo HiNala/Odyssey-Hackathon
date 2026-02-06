@@ -4,7 +4,11 @@ import { useState, useEffect, useRef, useCallback } from 'react';
 import { getOdysseyClient, resetOdysseyClient } from '@/lib/odyssey-client';
 import type { ConnectionStatus } from '@/lib/types';
 
-interface StartStreamOptions {
+/**
+ * Options for starting an Odyssey stream.
+ * Supports both text-to-video and image-to-video modes.
+ */
+export interface StartStreamOptions {
   prompt: string;
   image?: File | Blob;
   portrait?: boolean;
@@ -87,15 +91,30 @@ export function useOdysseyStream(): UseOdysseyStreamReturn {
   }, [performDisconnect]);
 
   // ── Connect to Odyssey with full event handlers (per SDK docs) ──
+  //
+  // IMPORTANT: Fatal errors (invalid API key, access denied) stop retries
+  // immediately. Only transient errors (timeout, no streamers) are retried.
+  // This prevents creating multiple stale sessions on the server.
   const connect = useCallback(async (): Promise<MediaStream> => {
     const client = getClient();
-    const maxRetries = 3;
+    const maxRetries = 2;
     let lastError: Error | null = null;
+    let isFatalError = false;
+
+    // Fatal error messages from Odyssey SDK docs (06-types.md)
+    const FATAL_PATTERNS = [
+      'invalid api key',
+      'api key format',
+      'api key access denied',
+      'api key cannot be empty',
+      'apikey is required',
+    ];
 
     for (let attempt = 1; attempt <= maxRetries; attempt++) {
       try {
         setStatus('connecting');
         setError(null);
+        isFatalError = false;
 
         console.log(`[Odyssey] Connecting (attempt ${attempt}/${maxRetries})...`);
 
@@ -127,19 +146,17 @@ export function useOdysseyStream(): UseOdysseyStreamReturn {
           onStreamError: (reason: string, message: string) => {
             console.error(`[Odyssey] onStreamError [${reason}]: ${message}`);
             setError(`Stream error: ${message}`);
-            // Stream errors are recoverable — don't set status to error
           },
           onError: (err: Error, fatal: boolean) => {
             console.error(`[Odyssey] onError (fatal=${fatal}):`, err.message);
             setError(err.message);
             if (fatal) {
+              isFatalError = true;
               setStatus('failed');
-              performDisconnect();
             }
           },
           onStatusChange: (newStatus: string, message?: string) => {
             console.log(`[Odyssey] onStatusChange: ${newStatus}`, message || '');
-            // Map SDK statuses to our ConnectionStatus type
             if (newStatus === 'authenticating') setStatus('authenticating');
             else if (newStatus === 'connecting') setStatus('connecting');
             else if (newStatus === 'reconnecting') setStatus('reconnecting');
@@ -159,17 +176,28 @@ export function useOdysseyStream(): UseOdysseyStreamReturn {
         return stream;
       } catch (err) {
         lastError = err instanceof Error ? err : new Error('Connection failed');
+        const msg = lastError.message.toLowerCase();
         console.warn(`[Odyssey] Connection attempt ${attempt}/${maxRetries} failed:`, lastError.message);
-        
-        // Wait before retry (exponential backoff)
+
+        // Check if this is a fatal error — don't retry
+        const isFatal = isFatalError || FATAL_PATTERNS.some((p) => msg.includes(p));
+        if (isFatal) {
+          console.error('[Odyssey] Fatal error — not retrying');
+          performDisconnect();
+          break;
+        }
+
+        // Wait before retry (exponential backoff) for transient errors
         if (attempt < maxRetries) {
-          await new Promise(resolve => setTimeout(resolve, 1000 * attempt));
+          const delay = 1000 * attempt;
+          console.log(`[Odyssey] Waiting ${delay}ms before retry...`);
+          await new Promise(resolve => setTimeout(resolve, delay));
         }
       }
     }
 
-    // All retries failed
-    const errorMessage = lastError?.message || 'Connection failed after retries';
+    // Failed
+    const errorMessage = formatOdysseyError(lastError?.message || 'Connection failed');
     setStatus('error');
     setError(errorMessage);
     throw new Error(errorMessage);
@@ -269,4 +297,12 @@ export function useOdysseyStream(): UseOdysseyStreamReturn {
     endStream,
     disconnect,
   };
+}
+
+function formatOdysseyError(message: string): string {
+  const lower = message.toLowerCase();
+  if (lower.includes('401') || lower.includes('unauthorized') || lower.includes('invalid api')) {
+    return `${message} — Check NEXT_PUBLIC_ODYSSEY_API_KEY in .env.local`;
+  }
+  return message;
 }

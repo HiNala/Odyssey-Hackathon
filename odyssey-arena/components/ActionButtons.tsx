@@ -8,37 +8,48 @@ export type ActionType = 'attack' | 'defend' | 'special' | 'taunt';
 interface ActionConfig {
   type: ActionType;
   label: string;
+  /**
+   * Prompt sent to scoring engine for stat calculation.
+   * Uses action verbs which are fine for the text-based scoring system.
+   */
   prompt: string;
   description: string;
   energyCost: number;
 }
 
+/**
+ * Quick-action presets for battle.
+ *
+ * IMPORTANT: These prompts go to the scoring engine (text analysis + Gemini),
+ * NOT directly to Odyssey. The `buildActionPrompt()` in prompt-templates.ts
+ * converts them to state descriptions before sending to Odyssey's interact().
+ */
 const ACTIONS: ActionConfig[] = [
   {
     type: 'attack',
     label: 'Attack',
-    prompt: 'strikes with powerful force, landing a devastating blow',
+    prompt: 'strikes with a powerful devastating blow, landing a crushing hit',
     description: 'Deal damage',
     energyCost: 10,
   },
   {
     type: 'defend',
     label: 'Defend',
-    prompt: 'braces into a defensive stance, shields raised and guard tightened',
+    prompt: 'defends with a fortified shield stance, guard tightened and absorbing impact',
     description: 'Boost defense',
     energyCost: 7,
   },
   {
     type: 'special',
     label: 'Special',
-    prompt: 'unleashes a devastating ultimate signature power attack with incredible force',
+    prompt: 'unleashes a devastating ultimate signature power with incredible cosmic force',
     description: 'High risk/reward',
     energyCost: 25,
   },
   {
     type: 'taunt',
     label: 'Taunt',
-    prompt: 'taunts the opponent with an intimidating display of dominance',
+    prompt: 'taunts the opponent with an intimidating display of overwhelming dominance',
     description: 'Drain energy',
     energyCost: 5,
   },

@@ -143,35 +143,57 @@ AAA game quality, rich detail, cinematic depth of field.`;
 
 // ─── Utility: Convert action verbs to state descriptions ────────────
 
+/**
+ * Convert action verbs to state descriptions for Odyssey interact() prompts.
+ *
+ * From Odyssey SDK interaction tips:
+ *   "puts on glasses" (action verb) → LOOPS (ongoing event that repeats)
+ *   "is wearing glasses" (state desc) → STABLE (one-time result)
+ *
+ * Rule of thumb:
+ *   Action verbs (puts on, picks up, starts) → May loop
+ *   State descriptions (is wearing, is holding, has) → Stable state
+ */
 function convertToStateDescription(action: string): string {
-  // Simple heuristic: if the action starts with common action verbs,
-  // convert to state description form.
   const lower = action.toLowerCase().trim();
 
-  const verbToState: Record<string, string> = {
-    attacks: 'is attacking with',
-    strikes: 'is striking with',
-    punches: 'is delivering a powerful punch,',
-    kicks: 'is delivering a powerful kick,',
-    slashes: 'is mid-slash,',
-    shoots: 'is firing,',
-    casts: 'is channeling,',
-    summons: 'has summoned',
-    throws: 'has thrown',
-    charges: 'is charging forward with',
-    blocks: 'is blocking with',
-    dodges: 'is evading,',
-    heals: 'is surrounded by healing energy,',
-    defends: 'is in a defensive stance,',
-    taunts: 'is taunting the opponent,',
-  };
+  // Verb-prefix → state-description mapping (handles both "strikes" and "strikes with...")
+  const verbToState: [string, string][] = [
+    ['unleashes', 'is channeling'],
+    ['attacks', 'is attacking with'],
+    ['strikes', 'is mid-strike, connecting'],
+    ['punches', 'is delivering a powerful punch,'],
+    ['kicks', 'is delivering a powerful kick,'],
+    ['slashes', 'is mid-slash,'],
+    ['shoots', 'is firing,'],
+    ['casts', 'is channeling,'],
+    ['summons', 'has summoned'],
+    ['throws', 'has thrown'],
+    ['charges', 'is charging forward with'],
+    ['blocks', 'is blocking with'],
+    ['dodges', 'is evading,'],
+    ['heals', 'is surrounded by healing energy,'],
+    ['defends', 'is in a fortified defensive stance,'],
+    ['taunts', 'is taunting the opponent,'],
+    ['launches', 'has launched'],
+    ['fires', 'is firing,'],
+    ['swings', 'is mid-swing,'],
+    ['crushes', 'is crushing with'],
+    ['smashes', 'is smashing with'],
+    ['blasts', 'is blasting with'],
+  ];
 
-  for (const [verb, state] of Object.entries(verbToState)) {
+  for (const [verb, state] of verbToState) {
     if (lower.startsWith(verb)) {
       return state + action.slice(verb.length);
     }
   }
 
-  // If it already uses state phrasing or is freeform, return as-is
+  // If the action doesn't start with a known verb, wrap it in state phrasing
+  // to be safe (prevents potential looping for unknown verbs)
+  if (!/^(is |has |are |was |were |been |being |holding |wearing |surrounded |channeling |radiating )/.test(lower)) {
+    return `is ${action}`;
+  }
+
   return action;
 }
