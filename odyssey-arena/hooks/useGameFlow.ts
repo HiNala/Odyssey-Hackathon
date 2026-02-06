@@ -57,25 +57,20 @@ export function useGameFlow() {
   const startGame = useCallback(async () => {
     if (state.phase !== 'idle') return;
     try {
-      // Timeout Odyssey connection after 8 seconds so the game doesn't hang
+      // Timeout Odyssey connection after 12 seconds to prevent indefinite hang
       const connectPromise = odyssey.connect();
-      const timeoutPromise = new Promise((_, reject) =>
-        setTimeout(() => reject(new Error('Connection timed out — starting in demo mode')), 8000)
+      const timeoutPromise = new Promise<never>((_, reject) =>
+        setTimeout(() => reject(new Error('Odyssey connection timed out after 12 seconds')), 12000)
       );
       await Promise.race([connectPromise, timeoutPromise]);
       dispatch({ type: 'CONNECT' });
     } catch (err) {
-      console.warn('[GameFlow] Odyssey connection failed, proceeding in demo mode:', err);
-      // Still proceed to setup — game works without Odyssey video
-      dispatch({ type: 'CONNECT' });
+      dispatch({
+        type: 'CONNECTION_ERROR',
+        error: err instanceof Error ? err.message : 'Connection failed — check your Odyssey API key',
+      });
     }
   }, [state.phase, odyssey, dispatch]);
-
-  // ── Start Demo Mode (skip Odyssey, test full UI flow) ──────────
-  const startDemoMode = useCallback(() => {
-    if (state.phase !== 'idle') return;
-    dispatch({ type: 'CONNECT' });
-  }, [state.phase, dispatch]);
 
   // ── Submit Character Setup (supports optional image for image-to-video) ──
   const submitCharacter = useCallback(
@@ -105,8 +100,9 @@ export function useGameFlow() {
           console.error('Setup stream failed:', err);
         }
       } else {
-        // Demo mode: brief delay to simulate setup
-        await new Promise((r) => setTimeout(r, 1500));
+        // Odyssey not connected yet — wait briefly then continue setup
+        console.warn('[GameFlow] Odyssey not ready during setup — skipping preview stream');
+        await new Promise((r) => setTimeout(r, 1000));
       }
 
       dispatch({ type: 'COMPLETE_SETUP', player });
@@ -312,7 +308,6 @@ export function useGameFlow() {
     dispatch,
     odyssey,
     startGame,
-    startDemoMode,
     submitCharacter,
     submitAction,
     resetGame,

@@ -20,7 +20,7 @@ export async function POST(request: NextRequest) {
     const { type } = body;
 
     const model = genAI.getGenerativeModel({
-      model: process.env.GEMINI_MODEL || 'gemini-2.0-flash',
+      model: process.env.GEMINI_MODEL || 'gemini-3-flash-preview',
     });
 
     let prompt: string;

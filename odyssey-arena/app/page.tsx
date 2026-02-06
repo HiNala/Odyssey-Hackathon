@@ -26,7 +26,6 @@ export default function ArenaPage() {
     dispatch,
     odyssey,
     startGame,
-    startDemoMode,
     submitCharacter,
     submitAction,
     resetGame,
@@ -49,12 +48,6 @@ export default function ArenaPage() {
     if (p2Name.trim()) dispatch({ type: 'SET_PLAYER_NAME', player: 2, name: p2Name.trim() });
     startGame();
   }, [p1Name, p2Name, dispatch, startGame]);
-
-  const handleStartDemo = useCallback(() => {
-    if (p1Name.trim()) dispatch({ type: 'SET_PLAYER_NAME', player: 1, name: p1Name.trim() });
-    if (p2Name.trim()) dispatch({ type: 'SET_PLAYER_NAME', player: 2, name: p2Name.trim() });
-    startDemoMode();
-  }, [p1Name, p2Name, dispatch, startDemoMode]);
 
   useEffect(() => {
     if (phase === 'battle' && !p1.isStreaming && !p2.isStreaming) {
@@ -211,14 +204,6 @@ export default function ArenaPage() {
                     className="w-full max-w-xs px-8 py-3 rounded-xl bg-white text-background font-semibold text-sm transition-all hover:bg-white/90"
                   >
                     Start Game
-                  </motion.button>
-                  <motion.button
-                    whileHover={{ scale: 1.01 }}
-                    whileTap={{ scale: 0.99 }}
-                    onClick={handleStartDemo}
-                    className="px-6 py-2 rounded-xl text-text-muted hover:text-text-secondary text-xs transition-colors"
-                  >
-                    Demo Mode (no API key required)
                   </motion.button>
                 </div>
 
