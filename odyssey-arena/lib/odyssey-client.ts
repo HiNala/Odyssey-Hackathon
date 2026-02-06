@@ -4,6 +4,7 @@ let odysseyClient: Odyssey | null = null;
 
 /**
  * Validate Odyssey API key format.
+ * Per SDK docs, keys start with "ody_" — length varies by account.
  */
 function validateAPIKey(apiKey: string): { valid: boolean; error?: string } {
   if (!apiKey || apiKey.trim() === '') {
@@ -14,8 +15,9 @@ function validateAPIKey(apiKey: string): { valid: boolean; error?: string } {
     return { valid: false, error: 'Invalid API key format (should start with "ody_")' };
   }
   
-  if (apiKey.length < 20) {
-    return { valid: false, error: 'API key appears incomplete (too short)' };
+  // Only validate prefix — key length varies by account tier
+  if (apiKey.length < 5) {
+    return { valid: false, error: 'API key appears incomplete' };
   }
   
   return { valid: true };

@@ -1,0 +1,16 @@
+<svg width="128" height="128" viewBox="0 0 128 128" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+  <path
+    d="M64 10L70 40L96 32L78 52L108 64L78 76L96 96L70 88L64 118L58 88L32 96L50 76L20 64L50 52L32 32L58 40L64 10Z"
+    fill="url(#odyssey-gradient)"
+  />
+  <path
+    d="M64 26L68 48L84 44L72 56L92 64L72 72L84 84L68 80L64 102L60 80L44 84L56 72L36 64L56 56L44 44L60 48L64 26Z"
+    fill="rgba(255,255,255,0.35)"
+  />
+  <defs>
+    <linearGradient id="odyssey-gradient" x1="16" y1="16" x2="112" y2="112" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#F59E0B"/>
+      <stop offset="1" stop-color="#8B5CF6"/>
+    </linearGradient>
+  </defs>
+</svg>

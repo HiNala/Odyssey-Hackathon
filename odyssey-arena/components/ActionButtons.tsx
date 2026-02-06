@@ -8,7 +8,6 @@ export type ActionType = 'attack' | 'defend' | 'special' | 'taunt';
 interface ActionConfig {
   type: ActionType;
   label: string;
-  icon: string;
   prompt: string;
   description: string;
   energyCost: number;
@@ -18,7 +17,6 @@ const ACTIONS: ActionConfig[] = [
   {
     type: 'attack',
     label: 'Attack',
-    icon: '\u2694\uFE0F',
     prompt: 'strikes with powerful force, landing a devastating blow',
     description: 'Deal damage',
     energyCost: 10,
@@ -26,7 +24,6 @@ const ACTIONS: ActionConfig[] = [
   {
     type: 'defend',
     label: 'Defend',
-    icon: '\uD83D\uDEE1\uFE0F',
     prompt: 'braces into a defensive stance, shields raised and guard tightened',
     description: 'Boost defense',
     energyCost: 7,
@@ -34,7 +31,6 @@ const ACTIONS: ActionConfig[] = [
   {
     type: 'special',
     label: 'Special',
-    icon: '\u2728',
     prompt: 'unleashes a devastating ultimate signature power attack with incredible force',
     description: 'High risk/reward',
     energyCost: 25,
@@ -42,7 +38,6 @@ const ACTIONS: ActionConfig[] = [
   {
     type: 'taunt',
     label: 'Taunt',
-    icon: '\uD83D\uDE24',
     prompt: 'taunts the opponent with an intimidating display of dominance',
     description: 'Drain energy',
     energyCost: 5,
@@ -74,13 +69,13 @@ export function ActionButtons({
           return (
             <motion.button
               key={action.type}
-              whileHover={isDisabled ? {} : { scale: 1.05, y: -2 }}
+              whileHover={isDisabled ? {} : { scale: 1.02 }}
               whileTap={isDisabled ? {} : { scale: 0.95 }}
               onClick={() => onAction(action.prompt)}
               disabled={isDisabled}
               aria-label={`${action.label}: ${action.description} (${action.energyCost} energy)`}
               className={cn(
-                'flex-1 glass rounded-xl px-3 py-2.5 flex flex-col items-center gap-0.5 transition-all',
+                'flex-1 glass rounded-xl px-3 py-2.5 min-h-[72px] flex flex-col items-center gap-0.5 transition-all',
                 'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/50',
                 'disabled:opacity-30 disabled:cursor-not-allowed',
                 !isDisabled && (isP1
@@ -88,7 +83,7 @@ export function ActionButtons({
                   : 'hover:bg-player2-accent/15 hover:ring-1 hover:ring-player2-accent/30'),
               )}
             >
-              <span className="text-lg leading-none">{action.icon}</span>
+              <ActionIcon type={action.type} accent={isP1 ? 'player1' : 'player2'} />
               <span
                 className={cn(
                   'text-[11px] font-semibold',
@@ -103,5 +98,51 @@ export function ActionButtons({
         })}
       </div>
     </div>
+  );
+}
+
+function ActionIcon({
+  type,
+  accent,
+}: {
+  type: ActionType;
+  accent: 'player1' | 'player2';
+}) {
+  const color =
+    accent === 'player1' ? 'text-player1-accent/80' : 'text-player2-accent/80';
+
+  if (type === 'attack') {
+    return (
+      <svg className={cn('w-5 h-5', color)} viewBox="0 0 24 24" fill="none" stroke="currentColor">
+        <path strokeWidth={1.6} strokeLinecap="round" d="M4 20L20 4" />
+        <path strokeWidth={1.6} strokeLinecap="round" d="M8 4h4l8 8v4" />
+        <path strokeWidth={1.6} strokeLinecap="round" d="M4 16l4 4" />
+      </svg>
+    );
+  }
+
+  if (type === 'defend') {
+    return (
+      <svg className={cn('w-5 h-5', color)} viewBox="0 0 24 24" fill="none" stroke="currentColor">
+        <path strokeWidth={1.6} strokeLinecap="round" d="M12 3l7 3v6c0 5-3.5 7.5-7 9-3.5-1.5-7-4-7-9V6l7-3Z" />
+      </svg>
+    );
+  }
+
+  if (type === 'special') {
+    return (
+      <svg className={cn('w-5 h-5', color)} viewBox="0 0 24 24" fill="none" stroke="currentColor">
+        <path strokeWidth={1.6} strokeLinecap="round" d="M12 3l2.5 6.5L21 12l-6.5 2.5L12 21l-2.5-6.5L3 12l6.5-2.5L12 3Z" />
+      </svg>
+    );
+  }
+
+  return (
+    <svg className={cn('w-5 h-5', color)} viewBox="0 0 24 24" fill="none" stroke="currentColor">
+      <path strokeWidth={1.6} strokeLinecap="round" d="M5 12c2 2 4 3 7 3s5-1 7-3" />
+      <path strokeWidth={1.6} strokeLinecap="round" d="M8 9c.5-1 1.5-1.5 2.5-1.5S12.5 8 13 9" />
+      <path strokeWidth={1.6} strokeLinecap="round" d="M6 7l2-2" />
+      <path strokeWidth={1.6} strokeLinecap="round" d="M18 7l-2-2" />
+    </svg>
   );
 }

@@ -2,7 +2,7 @@
 
 import { motion } from 'framer-motion';
 import { cn } from '@/lib/utils';
-import { phoneVariants, phoneFloatVariants, activeGlowVariants } from '@/lib/animations';
+import { phoneVariants, activeGlowVariants } from '@/lib/animations';
 import type { ReactNode } from 'react';
 
 interface PhoneFrameProps {
@@ -32,39 +32,37 @@ export function PhoneFrame({
       initial="hidden"
       animate="visible"
     >
-      <motion.div variants={phoneFloatVariants} animate="float">
-        <motion.div
-          variants={activeGlowVariants}
-          animate={isActive ? 'active' : 'inactive'}
-          className={cn(
-            'glass glass-inset rounded-3xl p-3 lg:p-4',
-            'w-full max-w-sm',
-            'flex flex-col gap-2',
-            accentBorder,
-            className
-          )}
-          style={{ height: 'clamp(350px, 60vh, 600px)' }}
-        >
-          {/* Notch */}
-          <div className="w-20 h-1 bg-white/30 rounded-full mx-auto" />
+      <motion.div
+        variants={activeGlowVariants}
+        animate={isActive ? 'active' : 'inactive'}
+        className={cn(
+          'glass glass-inset rounded-3xl p-3 lg:p-4',
+          'w-full max-w-sm',
+          'flex flex-col gap-2',
+          accentBorder,
+          className
+        )}
+        style={{ height: 'clamp(350px, 60vh, 600px)' }}
+      >
+        {/* Notch */}
+        <div className="w-20 h-1 bg-white/30 rounded-full mx-auto" />
 
-          {/* Label / Player Name */}
-          {(label || playerName) && (
-            <div
-              className={cn(
-                'text-center text-xs font-medium',
-                side === 'left'
-                  ? 'text-player1-accent/80'
-                  : 'text-player2-accent/80'
-              )}
-            >
-              {playerName || label}
-            </div>
-          )}
+        {/* Label / Player Name */}
+        {(label || playerName) && (
+          <div
+            className={cn(
+              'text-center text-xs font-medium',
+              side === 'left'
+                ? 'text-player1-accent/80'
+                : 'text-player2-accent/80'
+            )}
+          >
+            {playerName || label}
+          </div>
+        )}
 
-          {/* Content */}
-          <div className="flex-1 overflow-hidden rounded-2xl">{children}</div>
-        </motion.div>
+        {/* Content */}
+        <div className="flex-1 overflow-hidden rounded-2xl">{children}</div>
       </motion.div>
     </motion.div>
   );

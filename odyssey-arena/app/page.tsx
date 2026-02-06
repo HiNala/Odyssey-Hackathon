@@ -92,7 +92,7 @@ export default function ArenaPage() {
         <motion.header variants={arenaVariants} className="text-center mb-4">
           <div className="flex items-center justify-center gap-3">
             <img
-              src="/logo.png"
+              src="/logo.svg"
               alt="Odyssey Arena"
               className="h-10 w-auto opacity-90"
             />
@@ -114,7 +114,7 @@ export default function ArenaPage() {
             >
               <div className="glass rounded-3xl p-10 max-w-lg text-center space-y-6">
                 <img
-                  src="/logo.png"
+                  src="/logo.svg"
                   alt="Odyssey Arena"
                   className="h-20 w-auto mx-auto opacity-90"
                 />
