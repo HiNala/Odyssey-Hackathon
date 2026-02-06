@@ -6,6 +6,7 @@ import { cn } from '@/lib/utils';
 import { victoryOverlayVariants } from '@/lib/animations';
 import { Trophy, Swords, Flame, Zap, Shield, Users, Mic } from 'lucide-react';
 import { getEvolutionMeta } from '@/lib/evolution';
+import { useSfx } from '@/lib/sfx';
 import type { PlayerState, BattleStats } from '@/types/game';
 
 interface VictoryOverlayProps {
@@ -26,6 +27,8 @@ export function VictoryOverlay({
   battleStats,
 }: VictoryOverlayProps) {
   const isP1 = winner.id === 1;
+  const { playVictory } = useSfx();
+  const [shareStatus, setShareStatus] = useState<string | null>(null);
   const winnerKey = isP1 ? 'player1' : 'player2';
   const loserKey = isP1 ? 'player2' : 'player1';
 
@@ -43,6 +46,36 @@ export function VictoryOverlay({
 
   // Fetch closing commentary from Gemini
   const [closingCommentary, setClosingCommentary] = useState<string | null>(null);
+  useEffect(() => {
+    playVictory();
+  }, [playVictory]);
+
+  const handleShare = async () => {
+    const turns = turnCount ?? 0;
+    const damage = battleStats?.totalDamageDealt[isP1 ? 'player1' : 'player2'] ?? 0;
+    const shareText = `${winner.name} defeated ${loser.name} in Odyssey Arena. ${damage} total damage in ${turns} turns.`;
+
+    try {
+      if (navigator.share) {
+        await navigator.share({
+          title: 'Odyssey Arena Victory',
+          text: shareText,
+        });
+      } else if (navigator.clipboard?.writeText) {
+        await navigator.clipboard.writeText(shareText);
+        setShareStatus('Victory summary copied to clipboard');
+      } else {
+        setShareStatus('Sharing is not supported on this device');
+      }
+    } catch {
+      setShareStatus('Unable to share right now');
+    } finally {
+      if (!navigator.share) {
+        setTimeout(() => setShareStatus(null), 3000);
+      }
+    }
+  };
+
   useEffect(() => {
     async function fetchClosing() {
       try {
@@ -265,7 +298,18 @@ export function VictoryOverlay({
             <Users className="w-4 h-4" strokeWidth={1.5} />
             New Characters
           </motion.button>
+          <motion.button
+            whileHover={{ scale: 1.02 }}
+            whileTap={{ scale: 0.98 }}
+            onClick={handleShare}
+            className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl border border-border bg-surface-raised hover:bg-fill-subtle text-text-secondary hover:text-text-primary font-medium text-sm transition-all"
+          >
+            Share
+          </motion.button>
         </motion.div>
+        {shareStatus && (
+          <p className="text-center text-[10px] text-text-muted">{shareStatus}</p>
+        )}
       </div>
     </motion.div>
   );

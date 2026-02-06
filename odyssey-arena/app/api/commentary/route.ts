@@ -5,10 +5,8 @@ const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY || '');
 
 /**
  * POST /api/commentary
- * Generate live ESPN-style battle commentary via Gemini.
- * Lightweight endpoint — returns a single commentary line, fast.
- *
- * Body: { type: 'opening' | 'closing', ... context }
+ * Generate live battle commentary — the killer feature.
+ * Ultra-fast, single-line responses for real-time feel.
  */
 export async function POST(request: NextRequest) {
   try {
@@ -17,49 +15,43 @@ export async function POST(request: NextRequest) {
     }
 
     const body = await request.json();
-    const { type } = body;
+    const { type, context } = body;
 
     const model = genAI.getGenerativeModel({
-      model: process.env.GEMINI_MODEL || 'gemini-3-flash-preview',
+      model: process.env.GEMINI_MODEL || 'gemini-2.0-flash',
     });
 
-    let prompt: string;
+    let prompt = '';
 
-    if (type === 'opening') {
-      const { character1, character2, world } = body;
-      prompt = `You are a legendary sports announcer for an epic AI battle arena. Generate ONE electrifying opening line (max 25 words) for a battle between "${character1}" and "${character2}"${world ? ` in ${world}` : ''}.
+    if (type === 'battle_start') {
+      prompt = `You are an electrifying sports commentator for a creature battle arena. Generate ONE dramatic opening line (max 20 words). No quotes.
 
-Style: MAXIMUM HYPE. Think UFC announcer meets anime narrator. Make the audience feel the tension.
+${context.player1} versus ${context.player2} in ${context.arena || 'the arena'}.
 
-Examples of the energy level we need:
-- "Ladies and gentlemen, the arena ERUPTS as ${character1} faces ${character2} in what promises to be an LEGENDARY clash!"
-- "Two titans enter! Only one leaves! ${character1} versus ${character2} -- THIS. IS. WAR!"
-- "The ground trembles as these warriors lock eyes across the battlefield -- LET'S GO!"
+Style: ESPN/UFC announcer energy. Hype. Drama. Make viewers lean forward.
+Examples of tone: "Ladies and gentlemen, the arena trembles as two titans prepare to clash!"
+Generate the opening line NOW:`;
+    } else if (type === 'victory') {
+      prompt = `You are a legendary sports commentator calling the end of an epic battle. Generate ONE triumphant closing line (max 20 words). No quotes.
 
-Generate ONE opening line NOW (just the line, no quotes, no prefix):`;
-    } else if (type === 'closing') {
-      const { winner, loser, turns, victoryType } = body;
-      prompt = `You are a legendary sports announcer calling the end of an epic AI battle.
+Winner: ${context.winner}
+Defeated: ${context.loser}
+Battle lasted: ${context.turns} turns
 
-Winner: "${winner}"
-Defeated: "${loser}"
-Battle Length: ${turns} turns
-Victory Type: ${victoryType || 'standard'}
+Style: Iconic sports moment energy. The crowd is going WILD.
+Generate the closing line NOW:`;
+    } else if (type === 'action') {
+      prompt = `You are an electrifying sports commentator for a live creature battle. Generate ONE short, explosive commentary line (max 18 words). No quotes.
 
-Generate ONE dramatic closing line (max 25 words). Make the audience ROAR.
+${context.attacker} used "${context.action}" against ${context.defender}.
+Impact: ${context.impact} | Momentum shift: ${context.momentumChange > 0 ? '+' : ''}${context.momentumChange}
+${context.isCritical ? 'THIS WAS A CRITICAL HIT!' : ''}
+${context.comboCount > 1 ? `${context.comboCount}x COMBO!` : ''}
 
-${victoryType === 'flawless' ? 'This was a FLAWLESS VICTORY - emphasize total domination!' : ''}
-${victoryType === 'comeback' ? 'This was an incredible COMEBACK - emphasize the turnaround!' : ''}
-${turns <= 4 ? 'This was a QUICK battle - emphasize the speed and power!' : ''}
-
-Examples:
-- "WHAT A BATTLE! ${winner} RISES VICTORIOUS after ${turns} rounds of PURE CHAOS!"
-- "IT'S OVER! ${winner} has DONE IT! An UNFORGETTABLE performance!"
-- "The arena EXPLODES as ${winner} claims TOTAL VICTORY!"
-
-Generate closing line NOW (just the line, no quotes):`;
+Style: ESPN/UFC commentator calling the action live. Raw energy. Make it visceral.
+Generate the commentary NOW:`;
     } else {
-      return NextResponse.json({ commentary: null }, { status: 400 });
+      return NextResponse.json({ commentary: null });
     }
 
     const result = await model.generateContent(prompt);
@@ -67,7 +59,7 @@ Generate closing line NOW (just the line, no quotes):`;
 
     return NextResponse.json({ commentary });
   } catch (error) {
-    console.error('Commentary API error:', error);
-    return NextResponse.json({ commentary: null }, { status: 200 });
+    console.error('[Commentary] API error:', error);
+    return NextResponse.json({ commentary: null });
   }
 }

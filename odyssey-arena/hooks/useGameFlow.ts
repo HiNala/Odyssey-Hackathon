@@ -31,6 +31,41 @@ export function useGameFlow() {
   const odyssey = useOdysseyStream();
   const battleStreamLockRef = useRef(false);
 
+  // ── Live Commentary State (THE KILLER FEATURE) ──────────────────
+  const [commentary, setCommentary] = useState<{
+    text: string;
+    variant: 'action' | 'start' | 'victory' | 'critical';
+    key: string;
+  } | null>(null);
+
+  // Fire-and-forget commentary generation (never blocks game flow)
+  const generateCommentary = useCallback(
+    async (type: string, context: Record<string, unknown>) => {
+      try {
+        const res = await fetch('/api/commentary', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ type, context }),
+        });
+        const data = await res.json();
+        if (data.commentary) {
+          const variant =
+            type === 'battle_start' ? 'start' :
+            type === 'victory' ? 'victory' :
+            (context.isCritical ? 'critical' : 'action');
+          setCommentary({
+            text: data.commentary,
+            variant: variant as 'action' | 'start' | 'victory' | 'critical',
+            key: `${type}-${Date.now()}`,
+          });
+        }
+      } catch {
+        // Commentary is best-effort — never block the game
+      }
+    },
+    []
+  );
+
   // Evolution transformation state (consumed by page.tsx for the overlay)
   const [transformationData, setTransformationData] = useState<{
     characterName: string;
@@ -161,12 +196,36 @@ export function useGameFlow() {
       // Resolve the action in state
       dispatch({ type: 'RESOLVE_ACTION', event });
 
+      // Fire action commentary (non-blocking — never delays game)
+      {
+        const activeP = state.players[playerId - 1];
+        const opponentP = state.players[playerId === 1 ? 1 : 0];
+        generateCommentary('action', {
+          attacker: activeP.character || activeP.name,
+          defender: opponentP.character || opponentP.name,
+          action: sanitized,
+          impact: changes.impactType,
+          momentumChange: (playerId === 1 ? changes.player1.momentum : changes.player2.momentum) || 0,
+          isCritical: changes.impactType === 'critical',
+          comboCount: changes.comboCount || 0,
+        });
+      }
+
       // Check victory AFTER state update — compute from the event
       const updatedState = applyEventToState(state, event);
       const winner = checkVictoryCondition(updatedState);
 
       if (winner) {
         dispatch({ type: 'DECLARE_WINNER', winner });
+
+        // Fire victory commentary (non-blocking)
+        const winnerP = updatedState.players[winner - 1];
+        const loserP = updatedState.players[winner === 1 ? 1 : 0];
+        generateCommentary('victory', {
+          winner: winnerP.character || winnerP.name,
+          loser: loserP.character || loserP.name,
+          turns: updatedState.turnCount,
+        });
 
         // Evaluate evolution after the battle
         const winnerPlayer = updatedState.players[winner - 1];
@@ -245,8 +304,7 @@ export function useGameFlow() {
   // ── Start Battle Stream ────────────────────────────────────────
   // Attempts to start the Odyssey stream for the battle view.
   // Uses a ref-based lock to prevent concurrent reconnection attempts.
-  // Retries with exponential backoff if the first attempt fails.
-  // Auto-dispatches CONNECT if the game state was out of sync.
+  // Does a fresh reconnect to clear stale state from setup phase.
   const startBattleStream = useCallback(async () => {
     if (state.phase !== 'battle') return;
 
@@ -277,27 +335,45 @@ export function useGameFlow() {
           arena,
         );
 
-    const maxAttempts = 3;
-    for (let attempt = 1; attempt <= maxAttempts; attempt++) {
-      try {
-        const streamId = await odyssey.startStream(prompt);
-
-        // Ensure game state knows we're connected (important after reconnection / HMR)
-        if (!state.isConnected) {
-          dispatch({ type: 'CONNECT' });
-        }
-        dispatch({ type: 'START_STREAM', player: state.activePlayer, streamId });
-        battleStreamLockRef.current = false;
-        return; // Success — exit
-      } catch (err) {
-        console.error(`Failed to start battle stream (attempt ${attempt}/${maxAttempts}):`, err);
-        if (attempt < maxAttempts) {
-          // Exponential backoff — Odyssey session may need time to clean up
-          const delay = 2000 * attempt;
-          console.log(`[GameFlow] Retrying battle stream in ${delay}ms...`);
-          await new Promise((r) => setTimeout(r, delay));
-        }
+    try {
+      // Fresh reconnect: after the setup phase the Odyssey session is often stale.
+      // Force a clean disconnect→reconnect cycle so startStream doesn't hit
+      // "Already connecting" from leftover SDK state.
+      console.log('[GameFlow] Force-reconnecting Odyssey for battle stream...');
+      await odyssey.forceReconnect();
+      if (!state.isConnected) {
+        dispatch({ type: 'CONNECT' });
       }
+
+      const streamId = await odyssey.startStream(prompt);
+      dispatch({ type: 'START_STREAM', player: state.activePlayer, streamId });
+      battleStreamLockRef.current = false;
+
+      // Fire battle-start commentary (non-blocking)
+      generateCommentary('battle_start', {
+        player1: p1.character || p1.name,
+        player2: p2.character || p2.name,
+        arena: arena || 'the arena',
+      });
+
+      return; // Success
+    } catch (err) {
+      console.error('[GameFlow] Battle stream failed after force-reconnect:', err);
+    }
+
+    // Fallback: one more attempt after a longer delay
+    try {
+      console.log('[GameFlow] Retrying battle stream in 3s...');
+      await new Promise((r) => setTimeout(r, 3000));
+      const streamId = await odyssey.startStream(prompt);
+      if (!state.isConnected) {
+        dispatch({ type: 'CONNECT' });
+      }
+      dispatch({ type: 'START_STREAM', player: state.activePlayer, streamId });
+      battleStreamLockRef.current = false;
+      return;
+    } catch (err) {
+      console.error('[GameFlow] Battle stream retry also failed:', err);
     }
 
     battleStreamLockRef.current = false;
@@ -317,6 +393,7 @@ export function useGameFlow() {
     startBattleStream,
     transformationData,
     clearTransformation,
+    commentary,
   };
 }
 

@@ -20,6 +20,7 @@ interface UseOdysseyStreamReturn {
   mediaStream: MediaStream | null;
   streamId: string | null;
   connect: () => Promise<MediaStream>;
+  forceReconnect: () => Promise<MediaStream>;
   startStream: (promptOrOptions: string | StartStreamOptions) => Promise<string>;
   interact: (prompt: string) => Promise<void>;
   endStream: () => Promise<void>;
@@ -44,6 +45,9 @@ export function useOdysseyStream(): UseOdysseyStreamReturn {
   
   // Use ref to store client to avoid recreating on every render
   const clientRef = useRef<ReturnType<typeof getOdysseyClient> | null>(null);
+  
+  // Dedup lock: if a connect() is already in-flight, share the same promise
+  const connectPromiseRef = useRef<Promise<MediaStream> | null>(null);
 
   // Initialize client ref
   const getClient = useCallback(() => {
@@ -95,7 +99,8 @@ export function useOdysseyStream(): UseOdysseyStreamReturn {
   // IMPORTANT: Fatal errors (invalid API key, access denied) stop retries
   // immediately. Only transient errors (timeout, no streamers) are retried.
   // This prevents creating multiple stale sessions on the server.
-  const connect = useCallback(async (): Promise<MediaStream> => {
+  // Internal connect implementation (no dedup — called by connect wrapper)
+  const connectImpl = useCallback(async (): Promise<MediaStream> => {
     const client = getClient();
     const maxRetries = 2;
     let lastError: Error | null = null;
@@ -203,12 +208,47 @@ export function useOdysseyStream(): UseOdysseyStreamReturn {
     throw new Error(errorMessage);
   }, [getClient, performDisconnect]);
 
+  // ── Public connect with dedup — prevents "Already connecting" from concurrent calls ──
+  const connect = useCallback(async (): Promise<MediaStream> => {
+    // If a connect is already in flight, piggyback on it
+    if (connectPromiseRef.current) {
+      console.log('[Odyssey] Connect already in progress — awaiting existing promise');
+      return connectPromiseRef.current;
+    }
+
+    const promise = connectImpl();
+    connectPromiseRef.current = promise;
+    try {
+      return await promise;
+    } finally {
+      connectPromiseRef.current = null;
+    }
+  }, [connectImpl]);
+
+  // ── Force-reconnect: tear down everything and establish a fresh connection ──
+  const forceReconnect = useCallback(async (): Promise<MediaStream> => {
+    console.log('[Odyssey] Force-reconnecting (fresh session)...');
+    // Destroy old client completely
+    performDisconnect();
+    clientRef.current = null;
+    connectPromiseRef.current = null;
+    setStatus('disconnected');
+    setMediaStream(null);
+    setStreamId(null);
+    // Small delay for SDK cleanup
+    await new Promise(r => setTimeout(r, 300));
+    return connect();
+  }, [performDisconnect, connect]);
+
   // ── Ensure client is connected, reconnecting if needed ──
   const ensureConnected = useCallback(async (): Promise<void> => {
-    const client = getClient();
-    
-    // If the SDK reports connected, we're good
-    if (client.isConnected) return;
+    try {
+      const client = getClient();
+      // If the SDK reports connected, we're good
+      if (client.isConnected) return;
+    } catch {
+      // getClient can throw if client was reset — that's fine, we reconnect below
+    }
     
     // Client exists but isn't connected — need to reconnect
     console.log('[Odyssey] Client disconnected, reconnecting before stream...');
@@ -219,47 +259,58 @@ export function useOdysseyStream(): UseOdysseyStreamReturn {
   // Usage: startStream("prompt") or startStream({ prompt: "...", image: file })
   // Auto-reconnects if the client is disconnected (e.g. after HMR or endStream).
   const startStream = useCallback(async (promptOrOptions: string | StartStreamOptions): Promise<string> => {
-    try {
-      setError(null);
-      
-      // Ensure we have a live connection before starting a stream
-      await ensureConnected();
-      const client = getClient();
-      
-      // Normalize input to options object
-      const options: StartStreamOptions = typeof promptOrOptions === 'string'
-        ? { prompt: promptOrOptions }
-        : promptOrOptions;
-      
-      // Default to portrait mode for phone-screen format (704×1280)
-      const portrait = options.portrait ?? true;
-      
-      // Build stream options per Odyssey SDK docs
-      // Image-to-video: max 25MB, formats: JPEG, PNG, WebP, GIF, BMP, HEIC, HEIF, AVIF
-      const streamOptions: { prompt: string; portrait: boolean; image?: File | Blob } = {
-        prompt: options.prompt,
-        portrait,
-      };
-      
-      // Add image if provided (enables image-to-video mode)
-      if (options.image) {
-        console.log('[Odyssey] Starting image-to-video stream');
-        streamOptions.image = options.image;
-      } else {
-        console.log('[Odyssey] Starting text-to-video stream');
-      }
-      
-      const id = await client.startStream(streamOptions);
-      setStreamId(id);
-      setStatus('streaming');
-      return id;
-    } catch (err) {
-      const errorMessage = err instanceof Error ? err.message : 'Stream start failed';
-      setStatus('error');
-      setError(errorMessage);
-      throw new Error(errorMessage);
+    setError(null);
+    
+    // Normalize input to options object
+    const options: StartStreamOptions = typeof promptOrOptions === 'string'
+      ? { prompt: promptOrOptions }
+      : promptOrOptions;
+    
+    // Default to portrait mode for phone-screen format (704×1280)
+    const portrait = options.portrait ?? true;
+    
+    // Build stream options per Odyssey SDK docs
+    const streamOptions: { prompt: string; portrait: boolean; image?: File | Blob } = {
+      prompt: options.prompt,
+      portrait,
+    };
+    if (options.image) {
+      console.log('[Odyssey] Starting image-to-video stream');
+      streamOptions.image = options.image;
+    } else {
+      console.log('[Odyssey] Starting text-to-video stream');
     }
-  }, [getClient, ensureConnected]);
+
+    // Try with existing connection first, then force-reconnect on "Already connecting"
+    for (let pass = 0; pass < 2; pass++) {
+      try {
+        if (pass === 0) {
+          await ensureConnected();
+        } else {
+          console.log('[Odyssey] Retrying startStream with force-reconnect...');
+          await forceReconnect();
+        }
+        const client = getClient();
+        const id = await client.startStream(streamOptions);
+        setStreamId(id);
+        setStatus('streaming');
+        return id;
+      } catch (err) {
+        const msg = err instanceof Error ? err.message : '';
+        // If "Already connecting", force-reconnect on next pass
+        if (pass === 0 && msg.toLowerCase().includes('already connect')) {
+          console.warn('[Odyssey] Got "Already connecting" — will force-reconnect');
+          continue;
+        }
+        const errorMessage = msg || 'Stream start failed';
+        setStatus('error');
+        setError(errorMessage);
+        throw new Error(errorMessage);
+      }
+    }
+
+    throw new Error('Stream start failed after retries');
+  }, [getClient, ensureConnected, forceReconnect]);
 
   // ── Send an interaction prompt (state descriptions, not action verbs) ──
   // Best-effort: if client is disconnected, silently skip instead of crashing.
@@ -323,6 +374,7 @@ export function useOdysseyStream(): UseOdysseyStreamReturn {
     mediaStream,
     streamId,
     connect,
+    forceReconnect,
     startStream,
     interact,
     endStream,

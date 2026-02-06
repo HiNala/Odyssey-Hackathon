@@ -28,6 +28,8 @@ export function BattleOverlays({ state }: BattleOverlaysProps) {
   const [openingShown, setOpeningShown] = useState(false);
   const [openingText, setOpeningText] = useState<string | null>(null);
   const prevEventIdRef = useRef<string | null>(null);
+  const prevCriticalIdRef = useRef<string | null>(null);
+  const [showCritical, setShowCritical] = useState(false);
 
   // Fetch opening commentary from Gemini
   const fetchOpeningCommentary = useCallback(async () => {
@@ -70,6 +72,15 @@ export function BattleOverlays({ state }: BattleOverlaysProps) {
     }
   }, [latestEvent]);
 
+  useEffect(() => {
+    if (latestEvent?.impactType === 'critical' && latestEvent.id !== prevCriticalIdRef.current) {
+      prevCriticalIdRef.current = latestEvent.id;
+      setShowCritical(true);
+      const timer = setTimeout(() => setShowCritical(false), 1200);
+      return () => clearTimeout(timer);
+    }
+  }, [latestEvent]);
+
   // Determine if there's a hype callout to show (on top of the narrative)
   const hypeCallout = useMemo(() => {
     if (phase !== 'battle' || !latestEvent) return null;
@@ -102,6 +113,28 @@ export function BattleOverlays({ state }: BattleOverlaysProps) {
 
   return (
     <>
+      {/* ── Critical Hit Takeover ── */}
+      <AnimatePresence>
+        {showCritical && (
+          <motion.div
+            key={`crit-${latestEvent?.id}`}
+            initial={{ opacity: 0, scale: 0.6 }}
+            animate={{ opacity: [0, 1, 1, 0], scale: [0.6, 1.2, 1.1, 1.6] }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 1.2, times: [0, 0.15, 0.7, 1] }}
+            className="fixed inset-0 z-60 flex items-center justify-center pointer-events-none"
+          >
+            <div className="text-center">
+              <div className="text-6xl lg:text-8xl font-black text-red-400 drop-shadow-[0_0_40px_rgba(248,113,113,0.6)]">
+                CRITICAL
+              </div>
+              <div className="text-xl lg:text-2xl font-semibold tracking-[0.3em] text-white/70">
+                HIT
+              </div>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
       {/* ── Live Commentary Banner (shows Gemini narrative for every action) ── */}
       <AnimatePresence>
         {showNarrative && latestEvent?.result && (

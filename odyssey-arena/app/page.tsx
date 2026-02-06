@@ -14,7 +14,8 @@ import { DamagePopup } from '@/components/DamagePopup';
 import { BattleOverlays } from '@/components/BattleOverlays';
 import { TransformationOverlay } from '@/components/TransformationOverlay';
 import { EvolutionIndicator } from '@/components/EvolutionIndicator';
-import { AutoDemo } from '@/components/AutoDemo';
+import { WowModeLanding } from '@/components/WowModeLanding';
+import { CommentaryBox } from '@/components/CommentaryBox';
 import { useGameFlow } from '@/hooks/useGameFlow';
 import { arenaVariants } from '@/lib/animations';
 import { User } from 'lucide-react';
@@ -33,6 +34,7 @@ export default function ArenaPage() {
     startBattleStream,
     transformationData,
     clearTransformation,
+    commentary,
   } = useGameFlow();
 
   const { phase, players, activePlayer, winner, isProcessing } = state;
@@ -46,8 +48,15 @@ export default function ArenaPage() {
   const handleStartGame = useCallback(() => {
     if (p1Name.trim()) dispatch({ type: 'SET_PLAYER_NAME', player: 1, name: p1Name.trim() });
     if (p2Name.trim()) dispatch({ type: 'SET_PLAYER_NAME', player: 2, name: p2Name.trim() });
+    setShowIntro(false);
     startGame();
   }, [p1Name, p2Name, dispatch, startGame]);
+
+  useEffect(() => {
+    if (phase !== 'idle' && showIntro) {
+      setShowIntro(false);
+    }
+  }, [phase, showIntro]);
 
   useEffect(() => {
     if (phase === 'battle' && !p1.isStreaming && !p2.isStreaming) {
@@ -430,8 +439,15 @@ export default function ArenaPage() {
         )}
       </AnimatePresence>
 
+      {/* Live AI Commentary — the killer differentiator */}
+      <CommentaryBox
+        commentary={commentary?.text ?? null}
+        eventKey={commentary?.key}
+        variant={commentary?.variant}
+      />
+
       {/* Auto-playing intro for judges / first impressions */}
-      {showIntro && <AutoDemo onComplete={() => setShowIntro(false)} />}
+      {showIntro && phase === 'idle' && <WowModeLanding onSkip={() => setShowIntro(false)} />}
     </ArenaBackground>
   );
 }
