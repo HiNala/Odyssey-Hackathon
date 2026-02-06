@@ -11,6 +11,10 @@ interface DamagePopupProps {
   eventKey?: string;
 }
 
+/**
+ * DamagePopup — Clean, refined damage indicator.
+ * Floats up and fades. No bouncing, no flash. Just clarity.
+ */
 export function DamagePopup({ value, side, impact = 'normal', eventKey }: DamagePopupProps) {
   if (value === null || value === 0) return null;
 
@@ -21,8 +25,8 @@ export function DamagePopup({ value, side, impact = 'normal', eventKey }: Damage
     : impact === 'critical'
       ? 'text-danger'
       : impact === 'strong'
-        ? 'text-orange-400'
-        : 'text-red-300';
+        ? 'text-warning'
+        : 'text-danger/70';
 
   const sizeClass =
     impact === 'critical' ? 'text-4xl' :
@@ -34,11 +38,11 @@ export function DamagePopup({ value, side, impact = 'normal', eventKey }: Damage
       <motion.div
         key={eventKey || `${value}`}
         initial={{ opacity: 1, y: 0, scale: 0.8 }}
-        animate={{ opacity: 0, y: -40, scale: 1.1 }}
+        animate={{ opacity: 0, y: -40, scale: 1 }}
         exit={{ opacity: 0 }}
         transition={{ duration: 1, ease: 'easeOut' }}
         className={cn(
-          'absolute z-50 pointer-events-none font-bold font-mono tabular-nums',
+          'absolute z-50 pointer-events-none font-bold font-mono',
           side === 'left' ? 'left-1/3' : 'right-1/3',
           'top-1/3',
           sizeClass,
