@@ -23,6 +23,11 @@ export interface Character {
   name: string;
   description: string;
   archetype: string;
+  stats: {
+    power: number;
+    defense: number;
+    energy: number;
+  };
 }
 
 export interface World {
@@ -30,6 +35,31 @@ export interface World {
   description: string;
   environment: string;
 }
+
+export type Arena = World; // Alias for clarity
+
+export type BattlePhase = 'setup' | 'active' | 'finished';
+
+export type StatDelta = {
+  power?: number;
+  defense?: number;
+  energy?: number;
+}
+
+export type GameEvent = {
+  id: string;
+  timestamp: number;
+  actor: 1 | 2;
+  actorName: string;
+  action: string;
+  narration: string;
+  impact: {
+    player1Delta?: StatDelta;
+    player2Delta?: StatDelta;
+  };
+}
+
+export type BattleLog = GameEvent[];
 
 export interface PlayerStats {
   power: number;

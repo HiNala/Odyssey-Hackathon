@@ -1,214 +1,266 @@
-"use client";
+'use client';
 
-import { useState, useCallback } from "react";
-import { ArenaBackground } from "@/components/ArenaBackground";
-import { PhoneFrame } from "@/components/PhoneFrame";
-import { CenterHUD } from "@/components/CenterHUD";
-import { PromptInput } from "@/components/PromptInput";
-import { OdysseyStream } from "@/components/OdysseyStream";
-import { useOdysseyStream } from "@/hooks/useOdysseyStream";
-import type { ConnectionStatus } from "@/lib/types";
+import { useCallback, useEffect } from 'react';
+import { motion, AnimatePresence, useAnimationControls } from 'framer-motion';
+import { ArenaBackground } from '@/components/ArenaBackground';
+import { PhoneFrame } from '@/components/PhoneFrame';
+import { OdysseyStream } from '@/components/OdysseyStream';
+import { CenterHUD } from '@/components/CenterHUD';
+import { PromptInput } from '@/components/PromptInput';
+import { SetupForm } from '@/components/SetupForm';
+import { VictoryOverlay } from '@/components/VictoryOverlay';
+import { useGameFlow } from '@/hooks/useGameFlow';
+import { arenaVariants, shakeVariants } from '@/lib/animations';
 
 export default function ArenaPage() {
   const {
-    status,
-    error,
-    mediaStream,
-    connect,
-    startStream,
-    interact,
-    endStream,
-    disconnect,
-  } = useOdysseyStream();
+    state,
+    odyssey,
+    startGame,
+    submitCharacter,
+    submitAction,
+    resetGame,
+    startBattleStream,
+  } = useGameFlow();
 
-  const [isStreaming, setIsStreaming] = useState(false);
-  const [activePlayer, setActivePlayer] = useState<1 | 2>(1);
+  const { phase, players, activePlayer, winner, isProcessing } = state;
+  const [p1, p2] = players;
+  const shakeControls = useAnimationControls();
 
-  // Connection handler
-  const handleConnect = useCallback(async () => {
-    try {
-      await connect();
-    } catch (err) {
-      console.error("Connection failed:", err);
+  // Start battle stream when entering battle phase
+  useEffect(() => {
+    if (phase === 'battle' && !p1.isStreaming && !p2.isStreaming) {
+      startBattleStream();
     }
-  }, [connect]);
+  }, [phase, p1.isStreaming, p2.isStreaming, startBattleStream]);
 
-  // Start stream with initial prompt
-  const handleStartStream = useCallback(async (prompt: string) => {
-    try {
-      await startStream(prompt);
-      setIsStreaming(true);
-    } catch (err) {
-      console.error("Start stream failed:", err);
+  // Trigger shake on critical/strong events
+  const latestEvent = state.eventLog[state.eventLog.length - 1];
+  useEffect(() => {
+    if (!latestEvent) return;
+    if (latestEvent.impactType === 'critical') {
+      shakeControls.start('shakeHard');
+    } else if (latestEvent.impactType === 'strong') {
+      shakeControls.start('shake');
     }
-  }, [startStream]);
+  }, [latestEvent, shakeControls]);
 
-  // Interact with running stream
-  const handleInteract = useCallback(async (prompt: string) => {
-    try {
-      await interact(prompt);
-    } catch (err) {
-      console.error("Interaction failed:", err);
-    }
-  }, [interact]);
-
-  // End current stream
-  const handleEndStream = useCallback(async () => {
-    try {
-      await endStream();
-      setIsStreaming(false);
-    } catch (err) {
-      console.error("End stream failed:", err);
-    }
-  }, [endStream]);
-
-  // Disconnect completely
-  const handleDisconnect = useCallback(() => {
-    disconnect();
-    setIsStreaming(false);
-  }, [disconnect]);
-
-  // Handle prompt submission from the input bar
-  const handlePromptSubmit = useCallback(
-    async (prompt: string, target: "left" | "right") => {
-      const playerId = target === "left" ? 1 : 2;
-      setActivePlayer(playerId);
-      
-      console.log("Prompt submitted:", { prompt, target, playerId });
-
-      // If not connected, connect first
-      if (status === "disconnected") {
-        await handleConnect();
-        return; // User needs to submit again after connecting
-      }
-
-      // If connected but not streaming, start the stream
-      if (status === "connected" && !isStreaming) {
-        await handleStartStream(prompt);
-        return;
-      }
-
-      // If already streaming, interact with the world
-      if (status === "streaming" || isStreaming) {
-        await handleInteract(prompt);
-      }
+  // Handle battle action submission
+  const handleBattleAction = useCallback(
+    (prompt: string) => {
+      submitAction(prompt);
     },
-    [status, isStreaming, handleConnect, handleStartStream, handleInteract]
+    [submitAction]
   );
 
-  // Get status display text
-  const getStatusText = (status: ConnectionStatus): string => {
-    switch (status) {
-      case "disconnected":
-        return "Click arrow + enter prompt to connect";
-      case "connecting":
-        return "Connecting to Odyssey...";
-      case "connected":
-        return "Connected - Enter prompt to start streaming";
-      case "streaming":
-        return "Live streaming - Enter prompts to interact";
-      case "error":
-        return `Error: ${error || "Unknown error"}`;
-      default:
-        return "Ready";
-    }
-  };
+  // Handle character setup submission
+  const handleSetupSubmit = useCallback(
+    (character: string, world: string) => {
+      submitCharacter(state.setupPlayer, character, world);
+    },
+    [submitCharacter, state.setupPlayer]
+  );
 
   return (
     <ArenaBackground>
-      <div className="container mx-auto px-4 py-8 h-screen flex flex-col">
+      <motion.div
+        variants={arenaVariants}
+        initial="hidden"
+        animate="visible"
+        className="container mx-auto px-4 py-6 h-screen flex flex-col"
+      >
         {/* Header */}
-        <div className="text-center mb-8">
-          <h1 className="text-4xl font-bold text-white/90 tracking-tight">
+        <motion.div variants={arenaVariants} className="text-center mb-4">
+          <h1 className="text-3xl font-bold text-white/90 tracking-tight">
             ODYSSEY ARENA
           </h1>
-          <p className="text-white/60 text-sm mt-2">
+          <p className="text-white/50 text-xs mt-1">
             Live AI Battle Simulation
           </p>
-        </div>
+        </motion.div>
 
-        {/* Main Arena Layout */}
-        <div className="flex-1 flex items-center justify-center gap-6">
-          {/* Player 1 Phone */}
-          <PhoneFrame side="left" label={activePlayer === 1 ? "ACTIVE" : undefined}>
-            <OdysseyStream 
-              mediaStream={activePlayer === 1 ? mediaStream : null}
-              isActive={activePlayer === 1 && (status === "connecting" || status === "streaming")}
-            />
-          </PhoneFrame>
-
-          {/* Center HUD */}
-          <div className="flex flex-col gap-4">
-            <CenterHUD status={status} error={error} />
-            
-            {/* Connection Controls */}
-            <div className="glass rounded-xl p-4 w-full max-w-md">
-              <div className="flex flex-col gap-3">
-                {/* Status */}
-                <div className="text-center text-sm text-white/70">
-                  {getStatusText(status)}
-                </div>
-
-                {/* Control Buttons */}
-                <div className="flex gap-2 justify-center">
-                  {status === "disconnected" && (
-                    <button
-                      onClick={handleConnect}
-                      className="px-4 py-2 bg-blue-500/80 hover:bg-blue-500 text-white rounded-lg text-sm transition"
-                    >
-                      Connect
-                    </button>
-                  )}
-
-                  {isStreaming && (
-                    <button
-                      onClick={handleEndStream}
-                      className="px-4 py-2 bg-red-500/80 hover:bg-red-500 text-white rounded-lg text-sm transition"
-                    >
-                      End Stream
-                    </button>
-                  )}
-
-                  {(status === "connected" || status === "error") && (
-                    <button
-                      onClick={handleDisconnect}
-                      className="px-4 py-2 bg-gray-500/80 hover:bg-gray-500 text-white rounded-lg text-sm transition"
-                    >
-                      Disconnect
-                    </button>
-                  )}
-                </div>
-
-                {/* Error Display */}
-                {error && (
-                  <div className="text-red-400 text-xs text-center">
-                    {error}
+        {/* ─── IDLE PHASE: Welcome Screen ─────────────────────────── */}
+        <AnimatePresence mode="wait">
+          {phase === 'idle' && (
+            <motion.div
+              key="idle"
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -20 }}
+              className="flex-1 flex flex-col items-center justify-center gap-6"
+            >
+              <div className="glass rounded-3xl p-10 max-w-lg text-center space-y-6">
+                <div className="text-5xl">⚔️</div>
+                <h2 className="text-2xl font-bold text-white/90">
+                  Ready for Battle?
+                </h2>
+                <p className="text-white/50 text-sm leading-relaxed">
+                  Create two characters, place them in AI-generated worlds,
+                  and watch them clash in real-time through Odyssey&apos;s world
+                  model. No pre-rendered animations — every frame is generated live.
+                </p>
+                {state.connectionError && (
+                  <div className="bg-red-500/10 border border-red-500/20 rounded-lg px-4 py-2">
+                    <p className="text-red-400 text-xs">{state.connectionError}</p>
                   </div>
                 )}
+                <motion.button
+                  whileHover={{ scale: 1.05 }}
+                  whileTap={{ scale: 0.95 }}
+                  onClick={startGame}
+                  className="px-8 py-3 rounded-xl bg-white/20 hover:bg-white/30 text-white font-semibold transition-colors text-sm"
+                >
+                  Start Game
+                </motion.button>
               </div>
-            </div>
-          </div>
+            </motion.div>
+          )}
 
-          {/* Player 2 Phone */}
-          <PhoneFrame side="right" label={activePlayer === 2 ? "ACTIVE" : undefined}>
-            <OdysseyStream 
-              mediaStream={activePlayer === 2 ? mediaStream : null}
-              isActive={activePlayer === 2 && (status === "connecting" || status === "streaming")}
-            />
-          </PhoneFrame>
-        </div>
+          {/* ─── SETUP PHASE ──────────────────────────────────────── */}
+          {phase === 'setup' && (
+            <motion.div
+              key="setup"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              className="flex-1 flex items-center justify-center gap-6"
+            >
+              {/* Player 1 Phone */}
+              <PhoneFrame
+                side="left"
+                playerName={p1.name}
+                isActive={state.setupPlayer === 1}
+              >
+                <OdysseyStream
+                  mediaStream={state.setupPlayer === 1 ? odyssey.mediaStream : null}
+                  isActive={state.setupPlayer === 1 && isProcessing}
+                />
+              </PhoneFrame>
 
-        {/* Prompt Input */}
-        <div className="mt-8 mb-4">
-          <PromptInput onSubmit={handlePromptSubmit} />
-        </div>
+              {/* Center: Setup Form */}
+              <div className="w-full max-w-md">
+                <SetupForm
+                  playerId={state.setupPlayer}
+                  onSubmit={handleSetupSubmit}
+                  isProcessing={isProcessing}
+                />
+                {/* Progress indicator */}
+                <div className="flex justify-center gap-2 mt-4">
+                  <div
+                    className={`w-3 h-3 rounded-full ${p1.isSetupComplete ? 'bg-player1-accent' : 'bg-white/20'}`}
+                  />
+                  <div
+                    className={`w-3 h-3 rounded-full ${p2.isSetupComplete ? 'bg-player2-accent' : 'bg-white/20'}`}
+                  />
+                </div>
+              </div>
 
-        {/* Instructions */}
-        <div className="text-center text-white/40 text-xs mb-4">
-          <p>Use the arrows to select which player screen receives the prompt</p>
-          <p>Enter a description to generate a character or world, then interact!</p>
-        </div>
-      </div>
+              {/* Player 2 Phone */}
+              <PhoneFrame
+                side="right"
+                playerName={p2.name}
+                isActive={state.setupPlayer === 2}
+              >
+                <OdysseyStream
+                  mediaStream={state.setupPlayer === 2 ? odyssey.mediaStream : null}
+                  isActive={state.setupPlayer === 2 && isProcessing}
+                />
+              </PhoneFrame>
+            </motion.div>
+          )}
+
+          {/* ─── BATTLE PHASE ─────────────────────────────────────── */}
+          {phase === 'battle' && (
+            <motion.div
+              key="battle"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              className="flex-1 flex flex-col"
+            >
+              <motion.div
+                variants={shakeVariants}
+                animate={shakeControls}
+                initial="idle"
+                className="flex-1 flex items-center justify-center gap-6"
+              >
+                {/* Player 1 Phone */}
+                <PhoneFrame
+                  side="left"
+                  playerName={p1.character || p1.name}
+                  isActive={activePlayer === 1}
+                >
+                  <OdysseyStream
+                    mediaStream={odyssey.mediaStream}
+                    isActive={odyssey.status === 'streaming' || odyssey.status === 'connecting'}
+                  />
+                </PhoneFrame>
+
+                {/* Center HUD */}
+                <CenterHUD state={state} />
+
+                {/* Player 2 Phone */}
+                <PhoneFrame
+                  side="right"
+                  playerName={p2.character || p2.name}
+                  isActive={activePlayer === 2}
+                >
+                  <OdysseyStream
+                    mediaStream={odyssey.mediaStream}
+                    isActive={odyssey.status === 'streaming' || odyssey.status === 'connecting'}
+                  />
+                </PhoneFrame>
+              </motion.div>
+
+              {/* Prompt Input */}
+              <div className="mt-4 mb-2">
+                <PromptInput
+                  onSubmit={handleBattleAction}
+                  disabled={isProcessing || phase !== 'battle'}
+                  activePlayer={activePlayer}
+                  placeholder={`${players[activePlayer - 1].name}: Describe your action...`}
+                />
+              </div>
+
+              {/* Hint */}
+              <div className="text-center text-white/30 text-[10px] mb-2">
+                Type an action and press Enter. Be creative — dramatic actions have bigger impact!
+              </div>
+            </motion.div>
+          )}
+
+          {/* ─── VICTORY PHASE ────────────────────────────────────── */}
+          {phase === 'victory' && (
+            <motion.div
+              key="victory-bg"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              className="flex-1 flex items-center justify-center gap-6"
+            >
+              {/* Show final state behind overlay */}
+              <PhoneFrame side="left" playerName={p1.character || p1.name}>
+                <OdysseyStream mediaStream={null} isActive={false} />
+              </PhoneFrame>
+              <CenterHUD state={state} />
+              <PhoneFrame side="right" playerName={p2.character || p2.name}>
+                <OdysseyStream mediaStream={null} isActive={false} />
+              </PhoneFrame>
+            </motion.div>
+          )}
+        </AnimatePresence>
+      </motion.div>
+
+      {/* Victory Overlay (rendered outside main flow) */}
+      <AnimatePresence>
+        {phase === 'victory' && winner !== null && (
+          <VictoryOverlay
+            winner={players[winner - 1]}
+            loser={players[winner === 1 ? 1 : 0]}
+            onPlayAgain={resetGame}
+          />
+        )}
+      </AnimatePresence>
     </ArenaBackground>
   );
 }

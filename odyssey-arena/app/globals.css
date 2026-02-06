@@ -38,3 +38,69 @@ body {
     0 8px 32px 0 rgba(31, 38, 135, 0.15),
     inset 0 1px 2px rgba(255, 255, 255, 0.3);
 }
+
+/* ─── Animation keyframes ──────────────────────────────────────── */
+
+@keyframes float {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-8px); }
+}
+
+@keyframes glow-pulse {
+  0%, 100% { box-shadow: 0 0 20px rgba(255,255,255,0.15); }
+  50% { box-shadow: 0 0 40px rgba(255,255,255,0.35); }
+}
+
+@keyframes shake {
+  0%, 100% { transform: translateX(0); }
+  20% { transform: translateX(-10px); }
+  40% { transform: translateX(10px); }
+  60% { transform: translateX(-10px); }
+  80% { transform: translateX(10px); }
+}
+
+@keyframes shake-hard {
+  0%, 100% { transform: translateX(0); }
+  10% { transform: translateX(-20px); }
+  20% { transform: translateX(20px); }
+  30% { transform: translateX(-15px); }
+  40% { transform: translateX(15px); }
+  50% { transform: translateX(-10px); }
+  60% { transform: translateX(10px); }
+  70% { transform: translateX(-5px); }
+  80% { transform: translateX(5px); }
+}
+
+@keyframes slide-up {
+  from { opacity: 0; transform: translateY(20px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+/* Scrollbar styling for event log */
+.glass::-webkit-scrollbar {
+  width: 4px;
+}
+.glass::-webkit-scrollbar-track {
+  background: transparent;
+}
+.glass::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.15);
+  border-radius: 2px;
+}
+
+/* Utility animation classes */
+@utility animate-float {
+  animation: float 3s ease-in-out infinite;
+}
+@utility animate-glow-pulse {
+  animation: glow-pulse 2s ease-in-out infinite;
+}
+@utility animate-shake {
+  animation: shake 0.4s ease-in-out;
+}
+@utility animate-shake-hard {
+  animation: shake-hard 0.5s ease-in-out;
+}
+@utility animate-slide-up {
+  animation: slide-up 0.3s ease-out;
+}
