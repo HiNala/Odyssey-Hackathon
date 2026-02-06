@@ -36,7 +36,7 @@ export function DamagePopup({ value, side, impact = 'normal', eventKey }: Damage
   return (
     <AnimatePresence mode="wait">
       <motion.div
-        key={eventKey || `${value}-${Date.now()}`}
+        key={eventKey || `${value}`}
         initial={{ opacity: 1, y: 0, scale: 0.5 }}
         animate={{ opacity: 0, y: -60, scale: 1.3 }}
         exit={{ opacity: 0 }}

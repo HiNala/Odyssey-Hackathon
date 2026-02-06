@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useRef } from 'react';
+import { memo, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { cn } from '@/lib/utils';
 import type { ConnectionStatus } from '@/lib/types';
@@ -17,7 +17,7 @@ interface OdysseyStreamProps {
  * Shows status-aware overlays for connection states.
  * Uses required attributes for proper playback: autoPlay, playsInline, muted
  */
-export function OdysseyStream({
+export const OdysseyStream = memo(function OdysseyStream({
   mediaStream,
   status = 'disconnected',
   className = '',
@@ -60,6 +60,7 @@ export function OdysseyStream({
         autoPlay
         playsInline
         muted
+        aria-label="Live AI-generated video stream"
         className={cn(
           'w-full h-full object-cover transition-opacity duration-500',
           isShowingVideo ? 'opacity-100' : 'opacity-0'
@@ -169,7 +170,7 @@ export function OdysseyStream({
       </AnimatePresence>
     </div>
   );
-}
+});
 
 /** Small status badge component */
 function StatusBadge({ text, color }: { text: string; color: 'blue' | 'emerald' | 'red' }) {

@@ -1,6 +1,6 @@
 'use client';
 
-import { useCallback, useEffect } from 'react';
+import { useCallback, useEffect, useMemo } from 'react';
 import { motion, AnimatePresence, useAnimationControls } from 'framer-motion';
 import { ArenaBackground } from '@/components/ArenaBackground';
 import { PhoneFrame } from '@/components/PhoneFrame';
@@ -10,6 +10,7 @@ import { PromptInput } from '@/components/PromptInput';
 import { ActionButtons } from '@/components/ActionButtons';
 import { SetupForm } from '@/components/SetupForm';
 import { VictoryOverlay } from '@/components/VictoryOverlay';
+import { DamagePopup } from '@/components/DamagePopup';
 import { useGameFlow } from '@/hooks/useGameFlow';
 import { arenaVariants, shakeVariants } from '@/lib/animations';
 
@@ -79,14 +80,16 @@ export default function ArenaPage() {
 
   return (
     <ArenaBackground>
-      <motion.div
+      <motion.main
         variants={arenaVariants}
         initial="hidden"
         animate="visible"
         className="container mx-auto px-4 py-6 h-screen flex flex-col"
+        role="main"
+        aria-label="Odyssey Arena"
       >
         {/* Header */}
-        <motion.div variants={arenaVariants} className="text-center mb-4">
+        <motion.header variants={arenaVariants} className="text-center mb-4">
           <div className="flex items-center justify-center gap-3">
             <img
               src="/logo.png"
@@ -97,7 +100,7 @@ export default function ArenaPage() {
           <p className="text-white/50 text-xs mt-1">
             Live AI Battle Simulation
           </p>
-        </motion.div>
+        </motion.header>
 
         {/* ─── IDLE PHASE: Welcome Screen ─────────────────────────── */}
         <AnimatePresence mode="wait">
@@ -252,22 +255,30 @@ export default function ArenaPage() {
                 </div>
 
                 {/* Center HUD */}
-                <div className="order-first lg:order-none w-full lg:w-auto">
+                <div className="order-first lg:order-0 w-full lg:w-auto">
                   <CenterHUD state={state} />
                 </div>
 
                 {/* Player 2 Phone */}
-                <PhoneFrame
-                  side="right"
-                  playerName={p2.character || p2.name}
-                  isActive={activePlayer === 2}
-                >
-                  <OdysseyStream
-                    mediaStream={odyssey.mediaStream}
-                    status={odyssey.status}
-                    isActive={odyssey.status === 'streaming' || odyssey.status === 'connecting'}
+                <div className="relative">
+                  <PhoneFrame
+                    side="right"
+                    playerName={p2.character || p2.name}
+                    isActive={activePlayer === 2}
+                  >
+                    <OdysseyStream
+                      mediaStream={odyssey.mediaStream}
+                      status={odyssey.status}
+                      isActive={odyssey.status === 'streaming' || odyssey.status === 'connecting'}
+                    />
+                  </PhoneFrame>
+                  <DamagePopup
+                    value={damagePopup.p2}
+                    side="right"
+                    impact={damagePopup.impact}
+                    eventKey={damagePopup.key}
                   />
-                </PhoneFrame>
+                </div>
               </motion.div>
 
               {/* Quick Action Buttons */}
@@ -310,7 +321,7 @@ export default function ArenaPage() {
               <PhoneFrame side="left" playerName={p1.character || p1.name}>
                 <OdysseyStream mediaStream={odyssey.mediaStream} status={odyssey.status} isActive={false} />
               </PhoneFrame>
-              <div className="order-first lg:order-none w-full lg:w-auto">
+              <div className="order-first lg:order-0 w-full lg:w-auto">
                 <CenterHUD state={state} />
               </div>
               <PhoneFrame side="right" playerName={p2.character || p2.name}>
@@ -319,7 +330,7 @@ export default function ArenaPage() {
             </motion.div>
           )}
         </AnimatePresence>
-      </motion.div>
+      </motion.main>
 
       {/* Victory Overlay (rendered outside main flow) */}
       <AnimatePresence>

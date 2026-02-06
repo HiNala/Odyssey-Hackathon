@@ -78,8 +78,10 @@ export function ActionButtons({
               whileTap={isDisabled ? {} : { scale: 0.95 }}
               onClick={() => onAction(action.prompt)}
               disabled={isDisabled}
+              aria-label={`${action.label}: ${action.description} (${action.energyCost} energy)`}
               className={cn(
                 'flex-1 glass rounded-xl px-3 py-2.5 flex flex-col items-center gap-0.5 transition-all',
+                'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/50',
                 'disabled:opacity-30 disabled:cursor-not-allowed',
                 !isDisabled && (isP1
                   ? 'hover:bg-player1-accent/15 hover:ring-1 hover:ring-player1-accent/30'

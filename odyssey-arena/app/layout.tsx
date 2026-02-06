@@ -2,7 +2,13 @@ import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import { GameProvider } from "@/context/GameContext";
 import { ErrorBoundary } from "@/components/ErrorBoundary";
+import { validateEnv } from "@/lib/env";
 import "./globals.css";
+
+// Validate environment on server startup
+if (typeof window === "undefined") {
+  validateEnv();
+}
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
