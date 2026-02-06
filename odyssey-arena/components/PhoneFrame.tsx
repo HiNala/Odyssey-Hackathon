@@ -41,7 +41,7 @@ export function PhoneFrame({
             : 'bg-gradient-to-b from-fill-muted to-transparent',
           className
         )}
-        style={{ height: 'clamp(350px, 60vh, 600px)' }}
+        style={{ height: 'clamp(280px, 45vh, 520px)' }}
       >
         <div className="h-full rounded-[calc(0.75rem-1px)] bg-surface flex flex-col gap-2 p-3 lg:p-4">
           {/* Notch */}

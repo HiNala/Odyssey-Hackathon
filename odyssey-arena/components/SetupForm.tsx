@@ -6,8 +6,7 @@ import { cn } from '@/lib/utils';
 import { setupFormVariants } from '@/lib/animations';
 import { sanitizeInput, validateCharacterInput, validateWorldInput } from '@/lib/sanitize';
 import { getTestScenario, saveTestScenario } from '@/lib/storage';
-import { CHARACTER_ARCHETYPES, type CharacterArchetype } from '@/lib/character-library';
-import { ImagePlus, X, Loader2, RotateCcw, Zap } from 'lucide-react';
+import { ImagePlus, X, Loader2, RotateCcw } from 'lucide-react';
 
 interface SetupFormProps {
   playerId: 1 | 2;
@@ -161,45 +160,13 @@ export function SetupForm({ playerId, onSubmit, isProcessing, usedCharacter }: S
               <button
                 type="button"
                 onClick={handleLoadTestScenario}
-                className="mt-1 inline-flex items-center gap-1.5 text-[10px] px-3 py-1 rounded-md border border-border bg-surface-raised text-text-muted hover:text-text-secondary hover:border-white/10 transition"
+                className="mt-1 inline-flex items-center gap-1.5 text-[10px] px-3 py-1 rounded-lg border border-border bg-surface-raised text-text-muted hover:text-text-secondary hover:border-stroke-muted transition"
                 disabled={isProcessing}
               >
                 <RotateCcw className="w-3 h-3" />
                 Load saved setup
               </button>
             )}
-          </div>
-
-          {/* Quick-Select Archetypes */}
-          <div className="space-y-2">
-            <label className="text-text-secondary text-xs font-medium flex items-center gap-1.5">
-              <Zap className="w-3 h-3" />
-              Quick Select
-            </label>
-            <div className="flex gap-1.5 flex-wrap">
-              {CHARACTER_ARCHETYPES
-                .filter((_: CharacterArchetype, i: number) => isP1 ? i % 2 === 0 : i % 2 === 1)
-                .slice(0, 4)
-                .map((arch: CharacterArchetype) => (
-                  <button
-                    key={arch.name}
-                    onClick={() => {
-                      setCharacter(arch.character);
-                      setWorld(arch.world);
-                    }}
-                    disabled={isProcessing || (usedCharacter === arch.character)}
-                    className={cn(
-                      'text-[10px] px-2.5 py-1.5 rounded-lg border transition-all font-medium',
-                      'disabled:opacity-30 disabled:cursor-not-allowed',
-                      isP1
-                        ? 'border-player1-accent/20 bg-player1-muted text-player1-accent hover:bg-player1-accent/15 hover:border-player1-accent/30'
-                        : 'border-player2-accent/20 bg-player2-muted text-player2-accent hover:bg-player2-accent/15 hover:border-player2-accent/30'
-                    )}
-                  >
-                    {arch.name}
-                  </button>
-                ))}
-            </div>
           </div>
 
           {/* Character input */}
@@ -213,7 +180,7 @@ export function SetupForm({ playerId, onSubmit, isProcessing, usedCharacter }: S
               maxLength={200}
               disabled={isProcessing}
               aria-label="Character description"
-              className="w-full px-4 py-2.5 rounded-xl border border-border bg-surface-raised text-white text-sm placeholder:text-text-muted outline-none focus:border-white/15 transition disabled:opacity-40"
+              className="w-full px-4 py-2.5 rounded-xl border border-border bg-surface-raised text-text-primary text-sm placeholder:text-text-muted outline-none focus:border-stroke-muted transition disabled:opacity-40"
             />
             <div className="flex gap-1.5 flex-wrap">
               {characterPresets.map((p) => (
@@ -221,7 +188,7 @@ export function SetupForm({ playerId, onSubmit, isProcessing, usedCharacter }: S
                   key={p}
                   onClick={() => setCharacter(p)}
                   disabled={isProcessing}
-                  className="text-[10px] px-2.5 py-1 rounded-md border border-border bg-surface-raised text-text-muted hover:text-text-secondary hover:border-white/10 transition truncate max-w-[160px] disabled:opacity-30"
+                  className="text-[10px] px-2.5 py-1 rounded-lg border border-border bg-surface-raised text-text-muted hover:text-text-secondary hover:border-stroke-muted transition truncate max-w-[160px] disabled:opacity-30"
                 >
                   {p}
                 </button>
@@ -240,7 +207,7 @@ export function SetupForm({ playerId, onSubmit, isProcessing, usedCharacter }: S
               maxLength={200}
               disabled={isProcessing}
               aria-label="World description"
-              className="w-full px-4 py-2.5 rounded-xl border border-border bg-surface-raised text-white text-sm placeholder:text-text-muted outline-none focus:border-white/15 transition disabled:opacity-40"
+              className="w-full px-4 py-2.5 rounded-xl border border-border bg-surface-raised text-text-primary text-sm placeholder:text-text-muted outline-none focus:border-stroke-muted transition disabled:opacity-40"
             />
             <div className="flex gap-1.5 flex-wrap">
               {worldPresets.map((p) => (
@@ -248,7 +215,7 @@ export function SetupForm({ playerId, onSubmit, isProcessing, usedCharacter }: S
                   key={p}
                   onClick={() => setWorld(p)}
                   disabled={isProcessing}
-                  className="text-[10px] px-2.5 py-1 rounded-md border border-border bg-surface-raised text-text-muted hover:text-text-secondary hover:border-white/10 transition truncate max-w-[160px] disabled:opacity-30"
+                  className="text-[10px] px-2.5 py-1 rounded-lg border border-border bg-surface-raised text-text-muted hover:text-text-secondary hover:border-stroke-muted transition truncate max-w-[160px] disabled:opacity-30"
                 >
                   {p}
                 </button>
@@ -262,7 +229,7 @@ export function SetupForm({ playerId, onSubmit, isProcessing, usedCharacter }: S
               Reference Image <span className="text-text-muted">(optional)</span>
             </label>
             {imagePreview ? (
-              <div className="relative w-full aspect-video rounded-xl overflow-hidden bg-black/40 border border-border">
+              <div className="relative w-full aspect-video rounded-xl overflow-hidden bg-background border border-border">
                 <img
                   src={imagePreview}
                   alt="Reference preview"
@@ -271,7 +238,7 @@ export function SetupForm({ playerId, onSubmit, isProcessing, usedCharacter }: S
                 <button
                   onClick={clearImage}
                   disabled={isProcessing}
-                  className="absolute top-2 right-2 p-1.5 rounded-lg bg-black/70 hover:bg-black/90 text-white/70 hover:text-white transition disabled:opacity-40"
+                  className="absolute top-2 right-2 p-1.5 rounded-lg bg-overlay hover:bg-overlay text-text-secondary hover:text-text-primary transition disabled:opacity-40"
                   aria-label="Remove image"
                 >
                   <X className="w-3.5 h-3.5" />
@@ -280,12 +247,12 @@ export function SetupForm({ playerId, onSubmit, isProcessing, usedCharacter }: S
             ) : (
               <label className={cn(
                 'flex flex-col items-center justify-center w-full py-5 rounded-xl cursor-pointer transition',
-                'border border-dashed border-border hover:border-white/15 bg-surface-raised hover:bg-white/[0.03]',
+                'border border-dashed border-border hover:border-stroke-muted bg-surface-raised hover:bg-fill-subtle',
                 isProcessing && 'opacity-40 cursor-not-allowed'
               )}>
                 <ImagePlus className="w-5 h-5 text-text-muted mb-1.5" strokeWidth={1.5} />
                 <span className="text-text-muted text-xs">Click to upload</span>
-                <span className="text-text-muted/50 text-[10px]">JPEG, PNG, WebP, GIF (max 25MB)</span>
+                <span className="text-text-muted/60 text-[10px]">JPEG, PNG, WebP, GIF (max 25MB)</span>
                 <input
                   type="file"
                   accept={ACCEPTED_IMAGE_TYPES}
@@ -299,7 +266,7 @@ export function SetupForm({ playerId, onSubmit, isProcessing, usedCharacter }: S
 
           {/* Error */}
           {error && (
-            <div className="rounded-lg border border-danger/20 bg-danger/5 px-3 py-2">
+            <div className="rounded-xl border border-danger/20 bg-danger/5 px-3 py-2">
               <p className="text-danger/80 text-xs">{error}</p>
             </div>
           )}
@@ -312,8 +279,8 @@ export function SetupForm({ playerId, onSubmit, isProcessing, usedCharacter }: S
               'w-full py-3 rounded-xl font-semibold text-sm transition-all duration-200',
               'disabled:opacity-30 disabled:cursor-not-allowed',
               isP1
-                ? 'bg-player1-accent hover:bg-player1-accent/85 text-black'
-                : 'bg-player2-accent hover:bg-player2-accent/85 text-white'
+                ? 'bg-player1-accent hover:bg-player1-accent/85 text-background'
+                : 'bg-player2-accent hover:bg-player2-accent/85 text-text-primary'
             )}
           >
             {isProcessing ? (

@@ -319,6 +319,7 @@ export default function ArenaPage() {
             winner={players[winner - 1]}
             loser={players[winner === 1 ? 1 : 0]}
             onPlayAgain={resetGame}
+            turnCount={state.turnCount}
           />
         )}
       </AnimatePresence>

@@ -1,0 +1,7 @@
+Add character archetype quick-select and battle stream retry logic
+
+- Add character-library.ts with pre-defined character archetypes (name, character, world)
+- SetupForm: quick-select buttons to auto-fill character and world from archetypes
+- Filter archetypes by player (even/odd index) so each player gets unique options
+- useGameFlow: retry battle stream start once with 2s delay on failure
+- Gracefully continue game without video if all stream attempts fail

@@ -17,7 +17,7 @@ interface OdysseyStreamProps {
 
 /**
  * OdysseyStream — Video display for live AI stream.
- * Clean status indicators using lucide icons. No emojis.
+ * Clean status indicators. No emojis. Design-token consistent.
  */
 export const OdysseyStream = memo(function OdysseyStream({
   mediaStream,
@@ -49,7 +49,7 @@ export const OdysseyStream = memo(function OdysseyStream({
     <div
       className={cn(
         'relative w-full h-full overflow-hidden rounded-xl',
-        'bg-black/40',
+        'bg-background/60',
         className
       )}
     >
@@ -79,8 +79,8 @@ export const OdysseyStream = memo(function OdysseyStream({
             {/* Demo mode */}
             {demoMode && (
               <div className="text-center space-y-3">
-                <div className="w-12 h-12 rounded-xl bg-white/[0.04] border border-white/[0.06] flex items-center justify-center mx-auto">
-                  <Swords className="w-5 h-5 text-white/30" />
+                <div className="w-12 h-12 rounded-xl bg-fill-subtle border border-stroke-subtle flex items-center justify-center mx-auto">
+                  <Swords className="w-5 h-5 text-text-muted" />
                 </div>
                 <span className="text-[11px] text-text-muted font-medium tracking-wide uppercase">Demo Mode</span>
               </div>
@@ -89,8 +89,8 @@ export const OdysseyStream = memo(function OdysseyStream({
             {/* Disconnected / idle */}
             {!demoMode && (status === 'disconnected' || (!isActive && !mediaStream)) && (
               <div className="text-center space-y-3">
-                <div className="w-12 h-12 rounded-xl bg-white/[0.04] border border-white/[0.06] flex items-center justify-center mx-auto">
-                  <Video className="w-5 h-5 text-white/25" />
+                <div className="w-12 h-12 rounded-xl bg-fill-subtle border border-stroke-subtle flex items-center justify-center mx-auto">
+                  <Video className="w-5 h-5 text-text-muted" />
                 </div>
                 <span className="text-[11px] text-text-muted">Awaiting stream</span>
               </div>
@@ -99,8 +99,8 @@ export const OdysseyStream = memo(function OdysseyStream({
             {/* Connecting */}
             {!demoMode && (status === 'connecting' || status === 'authenticating' || status === 'reconnecting') && (
               <div className="text-center space-y-3">
-                <div className="w-12 h-12 rounded-xl bg-white/[0.04] border border-white/[0.06] flex items-center justify-center mx-auto">
-                  <Loader2 className="w-5 h-5 text-white/40 animate-spin" />
+                <div className="w-12 h-12 rounded-xl bg-fill-subtle border border-stroke-subtle flex items-center justify-center mx-auto">
+                  <Loader2 className="w-5 h-5 text-text-secondary animate-spin" />
                 </div>
                 <StatusBadge
                   text={
@@ -118,7 +118,7 @@ export const OdysseyStream = memo(function OdysseyStream({
             {/* Connected, starting stream */}
             {!demoMode && status === 'connected' && isActive && !mediaStream && (
               <div className="text-center space-y-3">
-                <div className="w-12 h-12 rounded-xl bg-white/[0.04] border border-white/[0.06] flex items-center justify-center mx-auto">
+                <div className="w-12 h-12 rounded-xl bg-fill-subtle border border-stroke-subtle flex items-center justify-center mx-auto">
                   <Wifi className="w-5 h-5 text-success/60 animate-pulse-subtle" />
                 </div>
                 <StatusBadge text="Starting stream" color="emerald" />
@@ -150,9 +150,9 @@ export const OdysseyStream = memo(function OdysseyStream({
             exit={{ opacity: 0, y: -8 }}
             className="absolute top-3 right-3"
           >
-            <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-black/60 backdrop-blur-sm border border-white/[0.06]">
+            <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-overlay-light backdrop-blur-sm border border-stroke-subtle">
               <div className="w-1.5 h-1.5 rounded-full bg-danger animate-pulse-subtle" />
-              <span className="text-[10px] text-white/70 font-medium tracking-wider uppercase">Live</span>
+              <span className="text-[10px] text-text-secondary font-medium tracking-wider uppercase">Live</span>
             </div>
           </motion.div>
         )}

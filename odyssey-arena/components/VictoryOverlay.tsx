@@ -21,7 +21,7 @@ export function VictoryOverlay({ winner, loser, onPlayAgain }: VictoryOverlayPro
       initial="hidden"
       animate="visible"
       exit="exit"
-      className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-md"
+      className="fixed inset-0 z-50 flex items-center justify-center bg-overlay backdrop-blur-md"
     >
       <motion.div
         variants={victoryContentVariants}
@@ -62,7 +62,7 @@ export function VictoryOverlay({ winner, loser, onPlayAgain }: VictoryOverlayPro
           whileHover={{ scale: 1.02 }}
           whileTap={{ scale: 0.98 }}
           onClick={onPlayAgain}
-          className="inline-flex items-center gap-2 px-6 py-2.5 rounded-xl border border-border bg-surface-raised hover:bg-white/[0.06] text-white/80 hover:text-white font-medium text-sm transition-all"
+          className="inline-flex items-center gap-2 px-6 py-2.5 rounded-xl border border-border bg-surface-raised hover:bg-fill-subtle text-text-secondary hover:text-text-primary font-medium text-sm transition-all"
         >
           <RotateCcw className="w-4 h-4" strokeWidth={1.5} />
           Play Again
