@@ -17,32 +17,38 @@ interface SetupFormProps {
 }
 
 const P1_CHARACTER_PRESETS = [
-  'A cyberpunk samurai with glowing red eyes and a plasma katana',
-  'A fierce valkyrie in golden winged armor wielding a lightning spear',
-  'An ancient dragon mage wreathed in blue dragonfire',
-  'A shadow assassin made of living smoke with twin daggers',
+  'A small adorable fire puppy with big sparkling eyes and a fluffy orange mane of flames',
+  'A tiny electric kitten with bright yellow fur and rosy cheeks crackling with sparks',
+  'An adorable round water dragon hatchling with shimmering blue scales and tiny wings',
+  'A fluffy purple cosmic fox with starry fur and a galaxy-swirl tail',
 ];
 
 const P2_CHARACTER_PRESETS = [
-  'A neon-punk hacker with holographic armor and a data blade',
-  'A celestial guardian clad in crystal armor radiating starlight',
-  'A volcanic titan forged from obsidian with molten fists',
-  'A spectral knight bound in ethereal chains with a ghostly greatsword',
+  'A chubby little ice penguin with crystal blue feathers and a tiny top hat of ice',
+  'A small cheerful plant creature with a big flower on its head and leafy arms',
+  'A tiny friendly ghost with big cute oval eyes and a wispy purple tail',
+  'A tiny adorable robot creature with antenna ears and glowing heart-shaped LED eyes',
 ];
 
 const P1_WORLD_PRESETS = [
-  'Neon-lit Tokyo streets at night, rain falling on holograms',
-  'A floating crystal palace above the clouds at sunset',
-  'An ancient volcanic arena with rivers of lava',
-  'A frozen wasteland under shimmering aurora borealis',
+  'A cozy volcanic meadow with warm glowing flowers and tiny lava pools at sunset',
+  'A cheerful hilltop during a gentle thunderstorm with rainbow lightning',
+  'A crystal clear underwater cove with colorful coral and golden sunlight',
+  'A dreamy floating island among the stars with glowing crystal trees',
 ];
 
 const P2_WORLD_PRESETS = [
-  'A cyberpunk rooftop with holographic billboards and neon rain',
-  'A sunken temple deep underwater with bioluminescent coral',
-  'A dark forest clearing with giant mushrooms glowing purple',
-  'A shattered space station orbiting a dying star',
+  'A sparkling frozen lake surrounded by candy-colored icebergs and soft snow',
+  'A magical enchanted garden with oversized flowers and glowing fireflies',
+  'A whimsical haunted forest with jack-o-lanterns and purple mushrooms',
+  'A colorful futuristic playground with neon lights and floating platforms',
 ];
+
+// Default auto-fill values so judges can instantly hit "Lock In"
+const P1_DEFAULT_CHARACTER = 'A small adorable fire puppy with big sparkling eyes, a fluffy orange mane of flames, and a wagging ember tail';
+const P1_DEFAULT_WORLD = 'A cozy volcanic meadow with warm glowing flowers and tiny lava pools at sunset';
+const P2_DEFAULT_CHARACTER = 'A chubby little ice penguin with crystal blue feathers, a tiny top hat of ice, and big round sparkly eyes';
+const P2_DEFAULT_WORLD = 'A sparkling frozen lake surrounded by candy-colored icebergs and soft falling snow';
 
 const ACCEPTED_IMAGE_TYPES = 'image/jpeg,image/png,image/webp,image/gif,image/bmp,image/heic,image/heif,image/avif';
 const MAX_IMAGE_SIZE = 25 * 1024 * 1024;
@@ -57,13 +63,14 @@ export function SetupForm({ playerId, onSubmit, isProcessing, usedCharacter }: S
   const isP1 = playerId === 1;
 
   useEffect(() => {
-    setCharacter('');
-    setWorld('');
+    // Auto-fill with cute defaults so judges can hit "Lock In" immediately
+    setCharacter(isP1 ? P1_DEFAULT_CHARACTER : P2_DEFAULT_CHARACTER);
+    setWorld(isP1 ? P1_DEFAULT_WORLD : P2_DEFAULT_WORLD);
     setImage(null);
     setImagePreview(null);
     setError('');
     setTestScenario(getTestScenario());
-  }, [playerId]);
+  }, [playerId, isP1]);
 
   const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -208,7 +215,7 @@ export function SetupForm({ playerId, onSubmit, isProcessing, usedCharacter }: S
               type="text"
               value={character}
               onChange={(e) => setCharacter(e.target.value)}
-              placeholder={isP1 ? 'e.g. A cyberpunk samurai with glowing eyes' : 'e.g. A volcanic titan with molten fists'}
+              placeholder={isP1 ? 'e.g. A cute fire puppy with sparkling eyes' : 'e.g. A chubby ice penguin with a tiny top hat'}
               maxLength={200}
               disabled={isProcessing}
               aria-label="Character description"
@@ -235,7 +242,7 @@ export function SetupForm({ playerId, onSubmit, isProcessing, usedCharacter }: S
               type="text"
               value={world}
               onChange={(e) => setWorld(e.target.value)}
-              placeholder={isP1 ? 'e.g. A volcanic arena at dusk' : 'e.g. A sunken temple underwater'}
+              placeholder={isP1 ? 'e.g. A cozy volcanic meadow at sunset' : 'e.g. A sparkling frozen lake with candy icebergs'}
               maxLength={200}
               disabled={isProcessing}
               aria-label="World description"

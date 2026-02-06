@@ -12,72 +12,72 @@ export interface CharacterArchetype {
 }
 
 export const CHARACTER_ARCHETYPES: CharacterArchetype[] = [
-  // ─── Fantasy ──────────────────────────────────────────
+  // ─── Fire / Electric ──────────────────────────────────
   {
-    name: 'Solar Knight',
-    character: 'A knight clad in molten gold armor wielding a plasma greatsword, radiating divine light and heat',
-    world: 'An ancient volcanic arena with rivers of lava and obsidian pillars',
+    name: 'Emberpup',
+    character: 'A small adorable fire puppy with big sparkling eyes, a fluffy orange mane of flames, and a wagging ember tail',
+    world: 'A cozy volcanic meadow with warm glowing flowers and tiny lava pools at sunset',
     category: 'fantasy',
   },
   {
-    name: 'Void Mage',
-    character: 'A hooded figure surrounded by floating runes and crackling purple energy, manipulating the fabric of space',
-    world: 'A floating crystal palace above the clouds at sunset',
+    name: 'Sparkitty',
+    character: 'A tiny electric kitten with bright yellow fur, rosy cheeks crackling with sparks, and a lightning-bolt shaped tail',
+    world: 'A cheerful hilltop during a gentle thunderstorm with rainbow lightning in the sky',
     category: 'fantasy',
   },
   {
-    name: 'Shadow Assassin',
-    character: 'A shadow assassin made of living smoke with twin obsidian daggers and glowing crimson eyes',
-    world: 'A dark forest clearing with giant mushrooms glowing purple and swirling mist',
+    name: 'Frostling',
+    character: 'A chubby little ice penguin with crystal blue feathers, a tiny top hat of ice, and big round sparkly eyes',
+    world: 'A sparkling frozen lake surrounded by candy-colored icebergs and soft falling snow',
     category: 'fantasy',
   },
   {
-    name: 'Storm Valkyrie',
-    character: 'A fierce valkyrie in silver winged armor wielding a lightning spear crackling with electricity',
-    world: 'A frozen tundra under shimmering aurora borealis with cracked ice and howling winds',
+    name: 'Leafsprout',
+    character: 'A small cheerful plant creature with a big flower on its head, leafy arms, and a happy smile with rosy cheeks',
+    world: 'A magical enchanted garden with oversized flowers and glowing fireflies at dusk',
     category: 'fantasy',
   },
 
-  // ─── Sci-Fi ───────────────────────────────────────────
+  // ─── Water / Psychic ──────────────────────────────────
   {
-    name: 'Nexus-7',
-    character: 'A sleek cybernetic warrior with glowing circuit patterns and adaptive plasma weapons across the body',
-    world: 'A neon-lit cyberpunk rooftop at night with holographic billboards and rain',
-    category: 'scifi',
+    name: 'Bubblefin',
+    character: 'An adorable round water dragon hatchling with tiny wings, shimmering blue scales, and bubbles floating around it',
+    world: 'A crystal clear underwater cove with colorful coral and shafts of golden sunlight',
+    category: 'fantasy',
   },
   {
-    name: 'Stellar Ace',
-    character: 'An elite pilot in a form-fitting exosuit with holographic HUD displays and energy shields',
-    world: 'A shattered space station orbiting a dying star with debris floating in zero gravity',
-    category: 'scifi',
-  },
-
-  // ─── Supernatural ─────────────────────────────────────
-  {
-    name: 'Infernus',
-    character: 'A towering demon wreathed in living fire with obsidian horns and veins flowing with molten lava',
-    world: 'A hellscape of crumbling basalt with rivers of fire and a blood-red sky',
-    category: 'supernatural',
-  },
-  {
-    name: 'Lumina',
-    character: 'A radiant celestial being with crystalline wings that shimmer with prismatic light and a halo of stars',
-    world: 'A celestial palace floating among the stars with crystalline floors and nebula skies',
+    name: 'Stardust',
+    character: 'A fluffy purple cosmic fox with starry fur, a crescent moon on its forehead, and a galaxy-swirl tail',
+    world: 'A dreamy floating island among the stars with glowing crystal trees and nebula skies',
     category: 'supernatural',
   },
 
-  // ─── Modern ───────────────────────────────────────────
+  // ─── Ghost / Dark ─────────────────────────────────────
   {
-    name: 'Iron Fist',
-    character: 'A muscular martial artist with glowing tattoos and wrapped fists crackling with ki energy',
-    world: 'A rain-soaked Tokyo street at night with neon signs reflecting off the wet pavement',
+    name: 'Spooklet',
+    character: 'A tiny friendly ghost with a round body, big cute oval eyes, a playful grin, and a wispy purple tail',
+    world: 'A whimsical haunted forest with jack-o-lanterns and glowing purple mushrooms at twilight',
+    category: 'supernatural',
+  },
+  {
+    name: 'Shadowpaw',
+    character: 'A small mischievous shadow cat with glowing teal eyes, pointy ears, and a swirling dark misty body',
+    world: 'A moonlit bamboo forest with floating lanterns and silver mist drifting between the trees',
+    category: 'supernatural',
+  },
+
+  // ─── Steel / Rock ─────────────────────────────────────
+  {
+    name: 'Geomite',
+    character: 'A small round rock creature with crystals growing from its back, stubby legs, and a wide happy grin',
+    world: 'A glittering crystal cave with gemstone walls reflecting rainbow light everywhere',
     category: 'modern',
   },
   {
-    name: 'Ghost Protocol',
-    character: 'A figure in sleek tactical tech gear surrounded by floating holographic code and data streams',
-    world: 'A high-tech underground bunker with screens showing cascading data and blue ambient lighting',
-    category: 'modern',
+    name: 'Zappbot',
+    character: 'A tiny adorable robot creature with antenna ears, glowing LED eyes shaped like hearts, and little hover jets',
+    world: 'A colorful futuristic playground with neon lights, floating platforms, and holographic toys',
+    category: 'scifi',
   },
 ];
 

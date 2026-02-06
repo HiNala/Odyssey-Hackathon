@@ -281,9 +281,8 @@ export default function ArenaPage() {
           {phase === 'battle' && (
             <motion.div
               key="battle"
-              initial={{ opacity: 0 }}
+              initial={{ opacity: 1, x: 0 }}
               animate={shakeControls}
-              style={{ opacity: 1 }}
               className="flex-1 flex flex-col relative"
             >
               {/* Critical Hit Overlay */}
