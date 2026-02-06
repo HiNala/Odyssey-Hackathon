@@ -41,7 +41,7 @@ export function PromptInput({
         className={cn(
           'rounded-2xl p-1.5 flex items-center gap-2',
           'border border-border bg-surface transition-all duration-200',
-          'focus-within:border-white/10',
+          'focus-within:border-stroke-muted',
           disabled && 'opacity-40',
         )}
       >
@@ -68,7 +68,7 @@ export function PromptInput({
           maxLength={500}
           disabled={disabled}
           aria-label="Enter battle action"
-          className="flex-1 bg-transparent border-none outline-none text-white/90 placeholder:text-text-muted text-sm px-2 disabled:cursor-not-allowed"
+          className="flex-1 bg-transparent border-none outline-none text-text-primary placeholder:text-text-muted text-sm px-2 disabled:cursor-not-allowed"
         />
 
         <motion.button
@@ -80,8 +80,8 @@ export function PromptInput({
             'flex-shrink-0 w-9 h-9 rounded-xl flex items-center justify-center transition-all duration-200',
             'disabled:opacity-20 disabled:cursor-not-allowed',
             isP1
-              ? 'bg-player1-accent text-black hover:bg-player1-accent/80'
-              : 'bg-player2-accent text-white hover:bg-player2-accent/80',
+              ? 'bg-player1-accent text-background hover:bg-player1-accent/80'
+              : 'bg-player2-accent text-text-primary hover:bg-player2-accent/80',
           )}
           aria-label="Submit action"
         >

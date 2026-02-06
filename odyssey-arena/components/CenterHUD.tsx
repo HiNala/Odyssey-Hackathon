@@ -25,8 +25,8 @@ export function CenterHUD({ state }: CenterHUDProps) {
   return (
     <motion.div
       variants={hudVariants}
-      className="rounded-2xl border border-border bg-surface p-4 lg:p-5 w-full max-w-md flex flex-col gap-3"
-      style={{ height: 'clamp(300px, 55vh, 600px)' }}
+      className="rounded-2xl border border-border bg-surface p-4 lg:p-5 w-full max-w-md flex flex-col gap-2.5"
+      style={{ height: 'clamp(280px, 45vh, 520px)' }}
     >
       {/* Header */}
       <div className="text-center space-y-2">

@@ -27,14 +27,14 @@ export default function Error({
         <div className="flex gap-3 justify-center">
           <button
             onClick={reset}
-            className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl border border-border bg-surface-raised hover:bg-white/[0.06] text-white/80 hover:text-white font-medium text-sm transition-all"
+            className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl border border-border bg-surface-raised hover:bg-fill-subtle text-text-secondary hover:text-text-primary font-medium text-sm transition-all"
           >
             <RotateCcw className="w-4 h-4" strokeWidth={1.5} />
             Try Again
           </button>
           <button
             onClick={() => window.location.reload()}
-            className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl border border-border bg-surface-raised hover:bg-white/[0.06] text-text-muted hover:text-text-secondary font-medium text-sm transition-all"
+            className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl border border-border bg-surface-raised hover:bg-fill-subtle text-text-muted hover:text-text-secondary font-medium text-sm transition-all"
           >
             <RefreshCw className="w-4 h-4" strokeWidth={1.5} />
             Reload
