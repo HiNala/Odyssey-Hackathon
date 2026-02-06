@@ -38,20 +38,20 @@ export function PhoneFrame({
             ? isP1
               ? 'bg-gradient-to-b from-player1-accent/30 via-player1-accent/10 to-transparent'
               : 'bg-gradient-to-b from-player2-accent/30 via-player2-accent/10 to-transparent'
-            : 'bg-gradient-to-b from-white/[0.08] to-transparent',
+            : 'bg-gradient-to-b from-fill-muted to-transparent',
           className
         )}
         style={{ height: 'clamp(350px, 60vh, 600px)' }}
       >
         <div className="h-full rounded-[calc(0.75rem-1px)] bg-surface flex flex-col gap-2 p-3 lg:p-4">
-          {/* Notch — subtle indicator bar */}
+          {/* Notch */}
           <div className="flex justify-center">
             <div
               className={cn(
                 'w-16 h-[3px] rounded-full transition-colors duration-500',
                 isActive
                   ? isP1 ? 'bg-player1-accent/40' : 'bg-player2-accent/40'
-                  : 'bg-white/10'
+                  : 'bg-fill-muted'
               )}
             />
           </div>
@@ -69,7 +69,7 @@ export function PhoneFrame({
           )}
 
           {/* Stream content */}
-          <div className="flex-1 overflow-hidden rounded-xl bg-black/40">{children}</div>
+          <div className="flex-1 overflow-hidden rounded-xl bg-background/60">{children}</div>
         </div>
       </div>
     </motion.div>

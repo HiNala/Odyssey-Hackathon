@@ -11,6 +11,8 @@ import {
   buildActionPrompt,
 } from '@/lib/prompt-templates';
 import { saveBattleRecord, updateGameStats } from '@/lib/storage';
+import { sanitizePrompt } from '@/lib/sanitize';
+import { actionRateLimiter } from '@/lib/rate-limiter';
 import type { ArenaState } from '@/types/game';
 
 /**
@@ -93,12 +95,26 @@ export function useGameFlow() {
     async (action: string) => {
       if (state.phase !== 'battle' || state.isProcessing) return;
 
+      // Rate limiting check
+      if (!actionRateLimiter.canMakeRequest()) {
+        console.warn('[Game] Rate limit exceeded. Slow down!');
+        return;
+      }
+      actionRateLimiter.recordRequest();
+
+      // Sanitize and validate the action prompt
+      const { sanitized, safe } = sanitizePrompt(action);
+      if (!safe || !sanitized) {
+        console.warn('[Game] Unsafe or empty action rejected');
+        return;
+      }
+
       const playerId = state.activePlayer;
       dispatch({ type: 'SET_PROCESSING', processing: true });
 
       // Calculate stat changes via AI-enhanced scoring engine
-      const changes = await calculateStatChangesWithAI(action, state);
-      const event = createEventEntry(playerId, action, changes);
+      const changes = await calculateStatChangesWithAI(sanitized, state);
+      const event = createEventEntry(playerId, sanitized, changes);
 
       // Send to Odyssey for visual feedback using prompt templates (skip in demo)
       if (!isDemoMode) {
