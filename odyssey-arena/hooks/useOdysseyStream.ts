@@ -203,13 +203,28 @@ export function useOdysseyStream(): UseOdysseyStreamReturn {
     throw new Error(errorMessage);
   }, [getClient, performDisconnect]);
 
+  // ── Ensure client is connected, reconnecting if needed ──
+  const ensureConnected = useCallback(async (): Promise<void> => {
+    const client = getClient();
+    
+    // If the SDK reports connected, we're good
+    if (client.isConnected) return;
+    
+    // Client exists but isn't connected — need to reconnect
+    console.log('[Odyssey] Client disconnected, reconnecting before stream...');
+    await connect();
+  }, [getClient, connect]);
+
   // ── Start a stream — supports both text-to-video and image-to-video ──
   // Usage: startStream("prompt") or startStream({ prompt: "...", image: file })
+  // Auto-reconnects if the client is disconnected (e.g. after HMR or endStream).
   const startStream = useCallback(async (promptOrOptions: string | StartStreamOptions): Promise<string> => {
-    const client = getClient();
-
     try {
       setError(null);
+      
+      // Ensure we have a live connection before starting a stream
+      await ensureConnected();
+      const client = getClient();
       
       // Normalize input to options object
       const options: StartStreamOptions = typeof promptOrOptions === 'string'
@@ -244,13 +259,20 @@ export function useOdysseyStream(): UseOdysseyStreamReturn {
       setError(errorMessage);
       throw new Error(errorMessage);
     }
-  }, [getClient]);
+  }, [getClient, ensureConnected]);
 
   // ── Send an interaction prompt (state descriptions, not action verbs) ──
+  // Best-effort: if client is disconnected, silently skip instead of crashing.
   const interact = useCallback(async (prompt: string): Promise<void> => {
-    const client = getClient();
-
     try {
+      const client = getClient();
+      
+      // Skip if not connected — interactions are visual-only, game logic doesn't depend on them
+      if (!client.isConnected) {
+        console.warn('[Odyssey] Skipping interact — client not connected');
+        return;
+      }
+      
       setError(null);
       await client.interact({ prompt });
     } catch (err) {
@@ -262,16 +284,25 @@ export function useOdysseyStream(): UseOdysseyStreamReturn {
   }, [getClient]);
 
   // ── End the current stream ──
+  // Resilient: if client is disconnected, just reset local state.
   const endStream = useCallback(async (): Promise<void> => {
-    const client = getClient();
-
     try {
+      const client = getClient();
+      
+      if (!client.isConnected) {
+        console.warn('[Odyssey] endStream — client not connected, resetting local state');
+        setStatus('disconnected');
+        setStreamId(null);
+        return;
+      }
+      
       await client.endStream();
       setStatus('connected');
       setStreamId(null);
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : 'End stream failed';
       setError(errorMessage);
+      setStreamId(null);
       // Don't throw — end stream failures are recoverable
       console.warn('[Odyssey] endStream failed (non-fatal):', errorMessage);
     }

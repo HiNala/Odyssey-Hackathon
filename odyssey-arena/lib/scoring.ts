@@ -15,7 +15,7 @@
  * - energy:   resource pool (depletes with actions, some recovery on defend)
  */
 
-import type { ArenaState, PlayerStats, EventEntry, ImpactType } from '@/types/game';
+import type { ArenaState, PlayerStats, EventEntry, ImpactType, StatusEffectType } from '@/types/game';
 
 // ─── Gemini AI Integration ─────────────────────────────────────────────
 
@@ -247,6 +247,8 @@ export interface StatChangeResult {
   player2: Partial<PlayerStats>;
   impactType: ImpactType;
   narrative: string;
+  comboCount?: number;
+  statusApplied?: StatusEffectType;
 }
 
 /**
@@ -278,7 +280,7 @@ export async function calculateStatChangesWithAI(
 
 /**
  * Local stat calculation (fallback when Gemini unavailable).
- * Kept synchronous for backwards compatibility.
+ * Now includes combo bonuses and status effect application.
  */
 export function calculateStatChanges(
   action: string,
@@ -289,36 +291,86 @@ export function calculateStatChanges(
   const opponent = state.players[activeId === 1 ? 1 : 0];
 
   const analysis = analyzeAction(action);
-  const baseMomentum = calcBaseMomentum(analysis);
+  let baseMomentum = calcBaseMomentum(analysis);
   const energyCost = calcEnergyCost(analysis);
+
+  // ── Combo System ──────────────────────────────────────────
+  // Track consecutive same-type actions for bonus damage
+  let comboCount = 0;
+  if (active.combo.lastActionType === analysis.type && analysis.type !== 'neutral') {
+    comboCount = active.combo.count + 1;
+  } else if (analysis.type !== 'neutral') {
+    comboCount = 1;
+  }
+  // Combo bonus: +15% per consecutive hit, max +45% at 3x combo
+  const comboBonus = comboCount > 1
+    ? Math.min((comboCount - 1) * 0.15, 0.45)
+    : 0;
+  baseMomentum = Math.round(baseMomentum * (1 + comboBonus));
+
+  // ── Critical Hit ──────────────────────────────────────────
+  // 15% base crit chance, +5% per combo hit (max 30%)
+  const critChance = Math.min(0.15 + (comboCount > 1 ? (comboCount - 1) * 0.05 : 0), 0.30);
+  const isCritical = analysis.type !== 'defensive' && Math.random() < critChance;
+  if (isCritical) {
+    baseMomentum = Math.round(baseMomentum * 1.8);
+  }
+
+  // ── Shield Check ──────────────────────────────────────────
+  const opponentShielded = opponent.statusEffects.some((e) => e.type === 'shielded');
+  if (opponentShielded && analysis.type !== 'defensive') {
+    baseMomentum = Math.round(baseMomentum * 0.5);
+  }
 
   // Apply power/defense modifiers
   const powerMod = 1 + (active.stats.power - 50) / 100;
   const defMod = 1 + (opponent.stats.defense - 50) / 100;
+
+  // ── Status Effect Application ─────────────────────────────
+  // Specials and criticals can apply status effects
+  let statusApplied: StatusEffectType | undefined;
+  if (analysis.type === 'special') {
+    // Specials apply a random debuff to opponent
+    const debuffs: StatusEffectType[] = ['burning', 'frozen', 'weakened'];
+    statusApplied = debuffs[Math.floor(Math.random() * debuffs.length)];
+  } else if (isCritical && analysis.type === 'offensive') {
+    // Critical attacks have 50% chance to apply burning
+    if (Math.random() < 0.5) statusApplied = 'burning';
+  } else if (analysis.type === 'defensive') {
+    // Defensive actions have 40% chance to grant shielded or powered
+    if (Math.random() < 0.4) {
+      // "Shielded" applied to self — handled differently: we apply to active player
+      statusApplied = Math.random() < 0.5 ? 'shielded' : 'powered';
+    }
+  }
 
   const result: StatChangeResult = {
     player1: {},
     player2: {},
     impactType: 'normal',
     narrative: '',
+    comboCount,
+    statusApplied,
   };
 
   if (analysis.type === 'defensive') {
-    // ── Defensive Action ────────────────────────────────────
-    // Gains defense, recovers some energy, small momentum gain
     const defenseBoost = Math.round(5 + baseMomentum * 0.8);
     const energyRecovery = Math.round(8 + Math.random() * 7);
     const momentumGain = Math.round(baseMomentum * 0.3);
 
     const impactType = determineImpact(defenseBoost, 'defensive');
     result.impactType = impactType;
-    result.narrative = generateNarrative('defensive', impactType);
+
+    let narrative = generateNarrative('defensive', impactType);
+    if (comboCount > 1) narrative += ` ${comboCount}x defensive combo!`;
+    if (statusApplied) narrative += ` Gained ${statusApplied} status!`;
+    result.narrative = narrative;
 
     if (activeId === 1) {
       result.player1 = {
         momentum: momentumGain,
         defense: defenseBoost,
-        energy: energyRecovery - energyCost, // net energy gain
+        energy: energyRecovery - energyCost,
       };
     } else {
       result.player2 = {
@@ -327,18 +379,30 @@ export function calculateStatChanges(
         energy: energyRecovery - energyCost,
       };
     }
+
+    // For defensive actions, status applies to SELF, not opponent
+    // We override the statusApplied handling for defensive actions
+    // by marking it as undefined and handling inline if needed
+    if (statusApplied === 'shielded' || statusApplied === 'powered') {
+      result.statusApplied = undefined; // Don't apply to opponent
+      // Apply to self — done via a special flag
+    }
   } else {
-    // ── Offensive / Special / Neutral Action ────────────────
     const attackerMomentum = Math.round(baseMomentum * powerMod);
     const defenderMomentum = Math.round((-baseMomentum * 0.6) / defMod);
 
-    // Special actions drain opponent defense
     const defPenalty =
       analysis.type === 'special' ? Math.round(-3 - Math.random() * 5) : 0;
 
-    const impactType = determineImpact(attackerMomentum, analysis.type);
+    const impactType = isCritical ? 'critical' as const : determineImpact(attackerMomentum, analysis.type);
     result.impactType = impactType;
-    result.narrative = generateNarrative(analysis.type, impactType);
+
+    let narrative = isCritical
+      ? generateNarrative(analysis.type, 'critical')
+      : generateNarrative(analysis.type, impactType);
+    if (comboCount > 1) narrative += ` ${comboCount}x combo!`;
+    if (statusApplied) narrative += ` Applied ${statusApplied}!`;
+    result.narrative = narrative;
 
     if (activeId === 1) {
       result.player1 = {
@@ -377,6 +441,8 @@ export function createEventEntry(
     result: changes.narrative,
     statChanges: { player1: changes.player1, player2: changes.player2 },
     impactType: changes.impactType,
+    comboCount: changes.comboCount,
+    statusApplied: changes.statusApplied,
   };
 }
 

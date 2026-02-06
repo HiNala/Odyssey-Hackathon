@@ -9,6 +9,7 @@ import type {
   PlayerStats,
   GameAction,
   EventEntry,
+  StatusEffect,
 } from '@/types/game';
 
 // ─── Initial State Factories ────────────────────────────────────────
@@ -25,6 +26,8 @@ export function createPlayerState(id: 1 | 2): PlayerState {
     world: '',
     characterPrompt: '',
     stats: createDefaultStats(),
+    statusEffects: [],
+    combo: { lastActionType: '', count: 0 },
     streamId: null,
     isStreaming: false,
     isSetupComplete: false,
@@ -39,6 +42,7 @@ export function createInitialState(): ArenaState {
     activePlayer: 1,
     setupPlayer: 1,
     winner: null,
+    turnCount: 0,
     isConnected: false,
     connectionError: null,
     isProcessing: false,
@@ -84,6 +88,42 @@ function applyStatChanges(
       },
     };
   }) as [PlayerState, PlayerState];
+}
+
+/** Tick down status effect durations and remove expired ones */
+function tickStatusEffects(effects: StatusEffect[]): StatusEffect[] {
+  return effects
+    .map((e) => ({ ...e, duration: e.duration - 1 }))
+    .filter((e) => e.duration > 0);
+}
+
+/** Apply start-of-turn status effects to a player's stats */
+function applyStatusEffectsTick(player: PlayerState): PlayerState {
+  let { momentum, power, defense, energy } = player.stats;
+
+  for (const effect of player.statusEffects) {
+    switch (effect.type) {
+      case 'burning':
+        momentum = clamp(momentum - effect.power, 0, 100);
+        break;
+      case 'frozen':
+        energy = clamp(energy - effect.power, 0, 100);
+        break;
+      case 'powered':
+        power = clamp(power + effect.power, 0, 100);
+        break;
+      case 'weakened':
+        power = clamp(power - effect.power, 0, 100);
+        break;
+      // 'shielded' is checked during damage calculation, not here
+    }
+  }
+
+  return {
+    ...player,
+    stats: { momentum, power, defense, energy },
+    statusEffects: tickStatusEffects(player.statusEffects),
+  };
 }
 
 // ─── Main Reducer ───────────────────────────────────────────────────
@@ -181,19 +221,53 @@ export function gameReducer(
     case 'SET_PROCESSING':
       return { ...state, isProcessing: action.processing };
 
-    case 'RESOLVE_ACTION':
+    case 'RESOLVE_ACTION': {
+      const updatedPlayers = applyStatChanges(state.players, action.event);
+
+      // Add any status effect from the event to the opponent
+      let playersWithEffects = updatedPlayers;
+      if (action.event.statusApplied) {
+        const attackerId = action.event.player;
+        const defenderId = attackerId === 1 ? 2 : 1;
+        playersWithEffects = updatePlayer(updatedPlayers, defenderId as 1 | 2, (p) => ({
+          ...p,
+          statusEffects: [
+            ...p.statusEffects.filter((e) => e.type !== action.event.statusApplied),
+            { type: action.event.statusApplied!, duration: 3, power: 5 },
+          ],
+        }));
+      }
+
+      // Update combo state for the active player
+      const comboPlayers = updatePlayer(playersWithEffects, action.event.player, (p) => ({
+        ...p,
+        combo: {
+          lastActionType: action.event.action,
+          count: action.event.comboCount ?? 0,
+        },
+      }));
+
       return {
         ...state,
         eventLog: [...state.eventLog, action.event],
-        players: applyStatChanges(state.players, action.event),
+        players: comboPlayers,
+        turnCount: state.turnCount + 1,
         isProcessing: false,
       };
+    }
 
-    case 'SWITCH_ACTIVE_PLAYER':
+    case 'SWITCH_ACTIVE_PLAYER': {
+      const nextPlayer = state.activePlayer === 1 ? 2 : 1;
+      // Apply start-of-turn status effects to the next active player
+      const tickedPlayers = updatePlayer(state.players, nextPlayer as 1 | 2, (p) =>
+        applyStatusEffectsTick(p)
+      );
       return {
         ...state,
-        activePlayer: state.activePlayer === 1 ? 2 : 1,
+        players: tickedPlayers,
+        activePlayer: nextPlayer as 1 | 2,
       };
+    }
 
     case 'DECLARE_WINNER':
       return { ...state, phase: 'victory', winner: action.winner };
