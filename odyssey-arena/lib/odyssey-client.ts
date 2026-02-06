@@ -3,6 +3,25 @@ import { Odyssey } from '@odysseyml/odyssey';
 let odysseyClient: Odyssey | null = null;
 
 /**
+ * Validate Odyssey API key format.
+ */
+function validateAPIKey(apiKey: string): { valid: boolean; error?: string } {
+  if (!apiKey || apiKey.trim() === '') {
+    return { valid: false, error: 'API key is empty' };
+  }
+  
+  if (!apiKey.startsWith('ody_')) {
+    return { valid: false, error: 'Invalid API key format (should start with "ody_")' };
+  }
+  
+  if (apiKey.length < 20) {
+    return { valid: false, error: 'API key appears incomplete (too short)' };
+  }
+  
+  return { valid: true };
+}
+
+/**
  * Get or create the singleton Odyssey client instance.
  * This ensures we only have one connection to Odyssey at a time,
  * which is critical since the API limits to 1 concurrent session.
@@ -17,7 +36,22 @@ export function getOdysseyClient(): Odyssey {
       );
     }
 
-    odysseyClient = new Odyssey({ apiKey });
+    // Validate API key format
+    const validation = validateAPIKey(apiKey);
+    if (!validation.valid) {
+      throw new Error(
+        `Invalid Odyssey API key: ${validation.error}. Please check your .env.local file. Get a valid key from https://developer.odyssey.ml`
+      );
+    }
+
+    try {
+      odysseyClient = new Odyssey({ apiKey });
+      console.log('✅ Odyssey client initialized successfully');
+    } catch (error) {
+      throw new Error(
+        `Failed to initialize Odyssey client: ${error instanceof Error ? error.message : 'Unknown error'}`
+      );
+    }
   }
 
   return odysseyClient;

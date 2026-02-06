@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import { GameProvider } from "@/context/GameContext";
+import { ErrorBoundary } from "@/components/ErrorBoundary";
 import "./globals.css";
 
 const geistSans = Geist({
@@ -14,6 +15,9 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
+  metadataBase: new URL(
+    process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:3000"
+  ),
   title: "Odyssey Arena",
   description:
     "Live AI Battle Arena — Two players, AI-generated worlds, real-time battle. Powered by Odyssey-2 Pro World Model & Google Gemini.",
@@ -44,10 +48,15 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en">
+      <head>
+        <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no" />
+      </head>
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >
-        <GameProvider>{children}</GameProvider>
+        <ErrorBoundary>
+          <GameProvider>{children}</GameProvider>
+        </ErrorBoundary>
       </body>
     </html>
   );

@@ -54,22 +54,37 @@ export function useOdysseyStream(): UseOdysseyStreamReturn {
 
   const connect = useCallback(async (): Promise<MediaStream> => {
     const client = getClient();
+    const maxRetries = 3;
+    let lastError: Error | null = null;
 
-    try {
-      setStatus('connecting');
-      setError(null);
+    for (let attempt = 1; attempt <= maxRetries; attempt++) {
+      try {
+        setStatus('connecting');
+        setError(null);
 
-      const stream = await client.connect();
-      setMediaStream(stream);
-      setStatus('connected');
+        console.log(`🔌 Connecting to Odyssey (attempt ${attempt}/${maxRetries})...`);
+        const stream = await client.connect();
+        setMediaStream(stream);
+        setStatus('connected');
+        console.log('✅ Connected to Odyssey successfully');
 
-      return stream;
-    } catch (err) {
-      const errorMessage = err instanceof Error ? err.message : 'Connection failed';
-      setStatus('error');
-      setError(errorMessage);
-      throw new Error(errorMessage);
+        return stream;
+      } catch (err) {
+        lastError = err instanceof Error ? err : new Error('Connection failed');
+        console.warn(`⚠️ Connection attempt ${attempt}/${maxRetries} failed:`, lastError.message);
+        
+        // Wait before retry (exponential backoff)
+        if (attempt < maxRetries) {
+          await new Promise(resolve => setTimeout(resolve, 1000 * attempt));
+        }
+      }
     }
+
+    // All retries failed
+    const errorMessage = lastError?.message || 'Connection failed after retries';
+    setStatus('error');
+    setError(errorMessage);
+    throw new Error(errorMessage);
   }, [getClient]);
 
   const startStream = useCallback(async (prompt: string): Promise<string> => {

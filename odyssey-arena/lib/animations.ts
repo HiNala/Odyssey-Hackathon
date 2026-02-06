@@ -56,11 +56,11 @@ export const phoneFloatVariants: Variants = {
 export const activeGlowVariants: Variants = {
   active: {
     boxShadow: [
-      '0 0 15px rgba(56,189,248,0.2)',
-      '0 0 30px rgba(56,189,248,0.45)',
-      '0 0 15px rgba(56,189,248,0.2)',
+      '0 0 8px rgba(56,189,248,0.12)',
+      '0 0 16px rgba(56,189,248,0.22)',
+      '0 0 8px rgba(56,189,248,0.12)',
     ],
-    transition: { duration: 1.5, repeat: Infinity, ease: 'easeInOut' },
+    transition: { duration: 4, repeat: Infinity, ease: 'easeInOut' },
   },
   inactive: {
     boxShadow: '0 0 0px rgba(56,189,248,0)',

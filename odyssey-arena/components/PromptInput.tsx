@@ -1,9 +1,10 @@
-﻿'use client';
+'use client';
 
 import { useState } from 'react';
 import { motion } from 'framer-motion';
 import { cn } from '@/lib/utils';
 import { promptBarVariants } from '@/lib/animations';
+import { sanitizeInput } from '@/lib/sanitize';
 
 interface PromptInputProps {
   onSubmit: (prompt: string) => void;
@@ -21,8 +22,9 @@ export function PromptInput({
   const [prompt, setPrompt] = useState('');
 
   const handleSubmit = () => {
-    if (!prompt.trim() || disabled) return;
-    onSubmit(prompt.trim());
+    const sanitized = sanitizeInput(prompt);
+    if (!sanitized || disabled) return;
+    onSubmit(sanitized);
     setPrompt('');
   };
 
@@ -64,7 +66,9 @@ export function PromptInput({
             if (e.key === 'Enter') handleSubmit();
           }}
           placeholder={placeholder}
+          maxLength={500}
           disabled={disabled}
+          aria-label="Enter battle action"
           className="flex-1 bg-transparent border-none outline-none text-white placeholder:text-white/30 text-sm px-2 disabled:cursor-not-allowed"
         />
 

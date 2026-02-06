@@ -7,6 +7,7 @@ import { PhoneFrame } from '@/components/PhoneFrame';
 import { OdysseyStream } from '@/components/OdysseyStream';
 import { CenterHUD } from '@/components/CenterHUD';
 import { PromptInput } from '@/components/PromptInput';
+import { ActionButtons } from '@/components/ActionButtons';
 import { SetupForm } from '@/components/SetupForm';
 import { VictoryOverlay } from '@/components/VictoryOverlay';
 import { useGameFlow } from '@/hooks/useGameFlow';
@@ -16,7 +17,9 @@ export default function ArenaPage() {
   const {
     state,
     odyssey,
+    isDemoMode,
     startGame,
+    startDemoMode,
     submitCharacter,
     submitAction,
     resetGame,
@@ -27,12 +30,12 @@ export default function ArenaPage() {
   const [p1, p2] = players;
   const shakeControls = useAnimationControls();
 
-  // Start battle stream when entering battle phase
+  // Start battle stream when entering battle phase (skip in demo mode)
   useEffect(() => {
-    if (phase === 'battle' && !p1.isStreaming && !p2.isStreaming) {
+    if (phase === 'battle' && !isDemoMode && !p1.isStreaming && !p2.isStreaming) {
       startBattleStream();
     }
-  }, [phase, p1.isStreaming, p2.isStreaming, startBattleStream]);
+  }, [phase, isDemoMode, p1.isStreaming, p2.isStreaming, startBattleStream]);
 
   // Trigger shake on critical/strong events
   const latestEvent = state.eventLog[state.eventLog.length - 1];
@@ -44,6 +47,19 @@ export default function ArenaPage() {
       shakeControls.start('shake');
     }
   }, [latestEvent, shakeControls]);
+
+  // Compute damage popup data from latest event
+  const damagePopup = useMemo(() => {
+    if (!latestEvent) return { p1: null, p2: null, key: '' };
+    const p1m = latestEvent.statChanges.player1?.momentum ?? 0;
+    const p2m = latestEvent.statChanges.player2?.momentum ?? 0;
+    return {
+      p1: p1m !== 0 ? p1m : null,
+      p2: p2m !== 0 ? p2m : null,
+      key: latestEvent.id,
+      impact: latestEvent.impactType,
+    };
+  }, [latestEvent]);
 
   // Handle battle action submission
   const handleBattleAction = useCallback(
@@ -112,14 +128,24 @@ export default function ArenaPage() {
                     <p className="text-red-400 text-xs">{state.connectionError}</p>
                   </div>
                 )}
-                <motion.button
-                  whileHover={{ scale: 1.05 }}
-                  whileTap={{ scale: 0.95 }}
-                  onClick={startGame}
-                  className="px-8 py-3 rounded-xl bg-white/20 hover:bg-white/30 text-white font-semibold transition-colors text-sm"
-                >
-                  Start Game
-                </motion.button>
+                <div className="flex flex-col gap-3 items-center">
+                  <motion.button
+                    whileHover={{ scale: 1.05 }}
+                    whileTap={{ scale: 0.95 }}
+                    onClick={startGame}
+                    className="px-8 py-3 rounded-xl bg-white/20 hover:bg-white/30 text-white font-semibold transition-colors text-sm"
+                  >
+                    Start Game
+                  </motion.button>
+                  <motion.button
+                    whileHover={{ scale: 1.02 }}
+                    whileTap={{ scale: 0.98 }}
+                    onClick={startDemoMode}
+                    className="px-6 py-2 rounded-lg text-white/40 hover:text-white/60 text-xs transition-colors"
+                  >
+                    Demo Mode (no API)
+                  </motion.button>
+                </div>
               </div>
             </motion.div>
           )}
@@ -131,21 +157,9 @@ export default function ArenaPage() {
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
-              className="flex-1 flex items-center justify-center gap-6"
+              className="flex-1 flex flex-col items-center justify-center gap-4 overflow-y-auto"
             >
-              {/* Player 1 Phone */}
-              <PhoneFrame
-                side="left"
-                playerName={p1.name}
-                isActive={state.setupPlayer === 1}
-              >
-                <OdysseyStream
-                  mediaStream={state.setupPlayer === 1 ? odyssey.mediaStream : null}
-                  isActive={state.setupPlayer === 1 && isProcessing}
-                />
-              </PhoneFrame>
-
-              {/* Center: Setup Form */}
+              {/* Setup Form (center stage) */}
               <div className="w-full max-w-md">
                 <SetupForm
                   playerId={state.setupPlayer}
@@ -163,17 +177,41 @@ export default function ArenaPage() {
                 </div>
               </div>
 
-              {/* Player 2 Phone */}
-              <PhoneFrame
-                side="right"
-                playerName={p2.name}
-                isActive={state.setupPlayer === 2}
-              >
-                <OdysseyStream
-                  mediaStream={state.setupPlayer === 2 ? odyssey.mediaStream : null}
-                  isActive={state.setupPlayer === 2 && isProcessing}
-                />
-              </PhoneFrame>
+              {/* Preview phone: only show when generating a preview stream */}
+              {isProcessing && !isDemoMode && (
+                <motion.div
+                  initial={{ opacity: 0, scale: 0.9 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  className="w-64 h-80"
+                >
+                  <PhoneFrame
+                    side={state.setupPlayer === 1 ? 'left' : 'right'}
+                    playerName={state.setupPlayer === 1 ? p1.name : p2.name}
+                    isActive
+                  >
+                    <OdysseyStream
+                      mediaStream={odyssey.mediaStream}
+                      status={odyssey.status}
+                      isActive
+                    />
+                  </PhoneFrame>
+                </motion.div>
+              )}
+
+              {/* Demo mode processing indicator */}
+              {isProcessing && isDemoMode && (
+                <motion.div
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  className="glass rounded-xl px-6 py-3 text-white/60 text-sm flex items-center gap-3"
+                >
+                  <svg className="w-5 h-5 animate-spin" fill="none" viewBox="0 0 24 24">
+                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
+                  </svg>
+                  Generating world preview...
+                </motion.div>
+              )}
             </motion.div>
           )}
 
@@ -190,22 +228,33 @@ export default function ArenaPage() {
                 variants={shakeVariants}
                 animate={shakeControls}
                 initial="idle"
-                className="flex-1 flex items-center justify-center gap-6"
+                className="flex-1 flex flex-col lg:flex-row items-center justify-center gap-4 lg:gap-6 overflow-auto"
               >
                 {/* Player 1 Phone */}
-                <PhoneFrame
-                  side="left"
-                  playerName={p1.character || p1.name}
-                  isActive={activePlayer === 1}
-                >
-                  <OdysseyStream
-                    mediaStream={odyssey.mediaStream}
-                    isActive={odyssey.status === 'streaming' || odyssey.status === 'connecting'}
+                <div className="relative">
+                  <PhoneFrame
+                    side="left"
+                    playerName={p1.character || p1.name}
+                    isActive={activePlayer === 1}
+                  >
+                    <OdysseyStream
+                      mediaStream={odyssey.mediaStream}
+                      status={odyssey.status}
+                      isActive={odyssey.status === 'streaming' || odyssey.status === 'connecting'}
+                    />
+                  </PhoneFrame>
+                  <DamagePopup
+                    value={damagePopup.p1}
+                    side="left"
+                    impact={damagePopup.impact}
+                    eventKey={damagePopup.key}
                   />
-                </PhoneFrame>
+                </div>
 
                 {/* Center HUD */}
-                <CenterHUD state={state} />
+                <div className="order-first lg:order-none w-full lg:w-auto">
+                  <CenterHUD state={state} />
+                </div>
 
                 {/* Player 2 Phone */}
                 <PhoneFrame
@@ -215,24 +264,35 @@ export default function ArenaPage() {
                 >
                   <OdysseyStream
                     mediaStream={odyssey.mediaStream}
+                    status={odyssey.status}
                     isActive={odyssey.status === 'streaming' || odyssey.status === 'connecting'}
                   />
                 </PhoneFrame>
               </motion.div>
 
-              {/* Prompt Input */}
-              <div className="mt-4 mb-2">
+              {/* Quick Action Buttons */}
+              <div className="mt-3 mb-1.5">
+                <ActionButtons
+                  onAction={handleBattleAction}
+                  disabled={isProcessing}
+                  activePlayer={activePlayer}
+                  energy={players[activePlayer - 1].stats.energy}
+                />
+              </div>
+
+              {/* Custom Prompt Input */}
+              <div className="mb-1.5">
                 <PromptInput
                   onSubmit={handleBattleAction}
                   disabled={isProcessing || phase !== 'battle'}
                   activePlayer={activePlayer}
-                  placeholder={`${players[activePlayer - 1].name}: Describe your action...`}
+                  placeholder={`${players[activePlayer - 1].name}: Or type a custom action...`}
                 />
               </div>
 
               {/* Hint */}
-              <div className="text-center text-white/30 text-[10px] mb-2">
-                Type an action and press Enter. Be creative — dramatic actions have bigger impact!
+              <div className="text-center text-white/30 text-[10px] mb-1">
+                Use quick actions above or type your own. Creative descriptions have bigger impact!
               </div>
             </motion.div>
           )}
@@ -244,15 +304,17 @@ export default function ArenaPage() {
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
-              className="flex-1 flex items-center justify-center gap-6"
+              className="flex-1 flex flex-col lg:flex-row items-center justify-center gap-4 lg:gap-6 overflow-auto"
             >
               {/* Show final state behind overlay */}
               <PhoneFrame side="left" playerName={p1.character || p1.name}>
-                <OdysseyStream mediaStream={null} isActive={false} />
+                <OdysseyStream mediaStream={odyssey.mediaStream} status={odyssey.status} isActive={false} />
               </PhoneFrame>
-              <CenterHUD state={state} />
+              <div className="order-first lg:order-none w-full lg:w-auto">
+                <CenterHUD state={state} />
+              </div>
               <PhoneFrame side="right" playerName={p2.character || p2.name}>
-                <OdysseyStream mediaStream={null} isActive={false} />
+                <OdysseyStream mediaStream={odyssey.mediaStream} status={odyssey.status} isActive={false} />
               </PhoneFrame>
             </motion.div>
           )}

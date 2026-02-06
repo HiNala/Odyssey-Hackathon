@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { cn } from '@/lib/utils';
 import { setupFormVariants } from '@/lib/animations';
+import { sanitizeInput, validateCharacterInput, validateWorldInput } from '@/lib/sanitize';
 
 interface SetupFormProps {
   playerId: 1 | 2;
@@ -31,9 +32,16 @@ export function SetupForm({ playerId, onSubmit, isProcessing }: SetupFormProps) 
   const [world, setWorld] = useState('');
   const isP1 = playerId === 1;
 
+  const [error, setError] = useState('');
+
   const handleSubmit = () => {
-    if (!character.trim() || !world.trim() || isProcessing) return;
-    onSubmit(character.trim(), world.trim());
+    if (isProcessing) return;
+    const charResult = validateCharacterInput(character);
+    if (!charResult.valid) { setError(charResult.error || ''); return; }
+    const worldResult = validateWorldInput(world);
+    if (!worldResult.valid) { setError(worldResult.error || ''); return; }
+    setError('');
+    onSubmit(sanitizeInput(character, 200), sanitizeInput(world, 200));
   };
 
   return (
@@ -66,7 +74,9 @@ export function SetupForm({ playerId, onSubmit, isProcessing }: SetupFormProps) 
             value={character}
             onChange={(e) => setCharacter(e.target.value)}
             placeholder="e.g. A cyberpunk samurai with glowing eyes"
+            maxLength={200}
             disabled={isProcessing}
+            aria-label="Character description"
             className="w-full px-4 py-3 rounded-xl glass text-white text-sm placeholder:text-white/30 outline-none focus:ring-2 focus:ring-white/20 disabled:opacity-50"
           />
           <div className="flex gap-1.5 flex-wrap">
@@ -91,7 +101,9 @@ export function SetupForm({ playerId, onSubmit, isProcessing }: SetupFormProps) 
             value={world}
             onChange={(e) => setWorld(e.target.value)}
             placeholder="e.g. A volcanic arena at dusk"
+            maxLength={200}
             disabled={isProcessing}
+            aria-label="World description"
             className="w-full px-4 py-3 rounded-xl glass text-white text-sm placeholder:text-white/30 outline-none focus:ring-2 focus:ring-white/20 disabled:opacity-50"
           />
           <div className="flex gap-1.5 flex-wrap">
@@ -107,6 +119,11 @@ export function SetupForm({ playerId, onSubmit, isProcessing }: SetupFormProps) 
             ))}
           </div>
         </div>
+
+        {/* Validation error */}
+        {error && (
+          <p className="text-red-400 text-xs text-center">{error}</p>
+        )}
 
         {/* Submit */}
         <button

@@ -15,9 +15,10 @@
   --font-mono: var(--font-geist-mono);
 }
 
-/* Arena gradient background */
+/* Arena gradient background — dark dramatic theme */
 body {
-  background: linear-gradient(135deg, #E0F2FE 0%, #FCE7F3 50%, #FDF4FF 100%);
+  background: #0a0a0f;
+  color: #ffffff;
   min-height: 100vh;
   overflow-x: hidden;
   font-family: Arial, Helvetica, sans-serif;

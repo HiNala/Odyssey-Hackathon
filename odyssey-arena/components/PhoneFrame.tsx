@@ -37,13 +37,13 @@ export function PhoneFrame({
           variants={activeGlowVariants}
           animate={isActive ? 'active' : 'inactive'}
           className={cn(
-            'glass glass-inset rounded-3xl p-4',
+            'glass glass-inset rounded-3xl p-3 lg:p-4',
             'w-full max-w-sm',
             'flex flex-col gap-2',
             accentBorder,
             className
           )}
-          style={{ height: 600 }}
+          style={{ height: 'clamp(350px, 60vh, 600px)' }}
         >
           {/* Notch */}
           <div className="w-20 h-1 bg-white/30 rounded-full mx-auto" />

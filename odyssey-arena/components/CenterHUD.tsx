@@ -1,4 +1,4 @@
-﻿'use client';
+'use client';
 
 import { useRef, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -26,8 +26,8 @@ export function CenterHUD({ state }: CenterHUDProps) {
   return (
     <motion.div
       variants={hudVariants}
-      className="glass rounded-2xl p-5 w-full max-w-md flex flex-col gap-3"
-      style={{ height: 600 }}
+      className="glass rounded-2xl p-4 lg:p-5 w-full max-w-md flex flex-col gap-3"
+      style={{ height: 'clamp(300px, 55vh, 600px)' }}
     >
       {/* Header */}
       <div className="text-center">
@@ -38,8 +38,8 @@ export function CenterHUD({ state }: CenterHUDProps) {
           <div className="flex items-center gap-1.5">
             <div
               className={cn(
-                'w-2.5 h-2.5 rounded-full bg-player1-accent',
-                activePlayer === 1 && phase === 'battle' && 'animate-pulse'
+                'w-2.5 h-2.5 rounded-full bg-player1-accent/80',
+                activePlayer === 1 && phase === 'battle' && 'ring-2 ring-player1-accent/30'
               )}
             />
             <span className="text-xs text-white/70">{p1.name}</span>
@@ -55,8 +55,8 @@ export function CenterHUD({ state }: CenterHUDProps) {
             <span className="text-xs text-white/70">{p2.name}</span>
             <div
               className={cn(
-                'w-2.5 h-2.5 rounded-full bg-player2-accent',
-                activePlayer === 2 && phase === 'battle' && 'animate-pulse'
+                'w-2.5 h-2.5 rounded-full bg-player2-accent/80',
+                activePlayer === 2 && phase === 'battle' && 'ring-2 ring-player2-accent/30'
               )}
             />
           </div>
