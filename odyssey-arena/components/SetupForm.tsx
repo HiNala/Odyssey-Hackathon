@@ -6,7 +6,8 @@ import { cn } from '@/lib/utils';
 import { setupFormVariants } from '@/lib/animations';
 import { sanitizeInput, validateCharacterInput, validateWorldInput } from '@/lib/sanitize';
 import { getTestScenario, saveTestScenario } from '@/lib/storage';
-import { ImagePlus, X, Loader2, RotateCcw } from 'lucide-react';
+import { CHARACTER_ARCHETYPES, type CharacterArchetype } from '@/lib/character-library';
+import { ImagePlus, X, Loader2, RotateCcw, Zap } from 'lucide-react';
 
 interface SetupFormProps {
   playerId: 1 | 2;
@@ -167,6 +168,38 @@ export function SetupForm({ playerId, onSubmit, isProcessing, usedCharacter }: S
                 Load saved setup
               </button>
             )}
+          </div>
+
+          {/* Quick-Select Archetypes */}
+          <div className="space-y-2">
+            <label className="text-text-secondary text-xs font-medium flex items-center gap-1.5">
+              <Zap className="w-3 h-3" />
+              Quick Select
+            </label>
+            <div className="flex gap-1.5 flex-wrap">
+              {CHARACTER_ARCHETYPES
+                .filter((_: CharacterArchetype, i: number) => isP1 ? i % 2 === 0 : i % 2 === 1)
+                .slice(0, 4)
+                .map((arch: CharacterArchetype) => (
+                  <button
+                    key={arch.name}
+                    onClick={() => {
+                      setCharacter(arch.character);
+                      setWorld(arch.world);
+                    }}
+                    disabled={isProcessing || (usedCharacter === arch.character)}
+                    className={cn(
+                      'text-[10px] px-2.5 py-1.5 rounded-lg border transition-all font-medium',
+                      'disabled:opacity-30 disabled:cursor-not-allowed',
+                      isP1
+                        ? 'border-player1-accent/20 bg-player1-muted text-player1-accent hover:bg-player1-accent/15 hover:border-player1-accent/30'
+                        : 'border-player2-accent/20 bg-player2-muted text-player2-accent hover:bg-player2-accent/15 hover:border-player2-accent/30'
+                    )}
+                  >
+                    {arch.name}
+                  </button>
+                ))}
+            </div>
           </div>
 
           {/* Character input */}

@@ -163,6 +163,8 @@ export function useGameFlow() {
   }, [odyssey, dispatch]);
 
   // ── Start Battle Stream ────────────────────────────────────────
+  // Attempts to start the Odyssey stream for the battle view.
+  // Retries once after a delay if the first attempt fails (e.g. reconnection needed).
   const startBattleStream = useCallback(async () => {
     if (state.phase !== 'battle' || isDemoMode) return;
     const p1 = state.players[0];
@@ -176,12 +178,22 @@ export function useGameFlow() {
       arena
     );
 
-    try {
-      const streamId = await odyssey.startStream(prompt);
-      dispatch({ type: 'START_STREAM', player: state.activePlayer, streamId });
-    } catch (err) {
-      console.error('Failed to start battle stream:', err);
+    const maxAttempts = 2;
+    for (let attempt = 1; attempt <= maxAttempts; attempt++) {
+      try {
+        const streamId = await odyssey.startStream(prompt);
+        dispatch({ type: 'START_STREAM', player: state.activePlayer, streamId });
+        return; // Success — exit
+      } catch (err) {
+        console.error(`Failed to start battle stream (attempt ${attempt}/${maxAttempts}):`, err);
+        if (attempt < maxAttempts) {
+          // Brief delay before retry — Odyssey session may need time to clean up
+          await new Promise((r) => setTimeout(r, 2000));
+        }
+      }
     }
+    // All attempts failed — game continues without stream (Odyssey is best-effort)
+    console.warn('[GameFlow] Battle stream could not be started. Game continues without video.');
   }, [state, odyssey, dispatch, isDemoMode]);
 
   return {
