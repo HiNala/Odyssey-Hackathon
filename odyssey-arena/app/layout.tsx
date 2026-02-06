@@ -15,7 +15,26 @@ const geistMono = Geist_Mono({
 
 export const metadata: Metadata = {
   title: "Odyssey Arena",
-  description: "Live AI Battle Arena powered by Odyssey-2 Pro World Model",
+  description:
+    "Live AI Battle Arena — Two players, AI-generated worlds, real-time battle. Powered by Odyssey-2 Pro World Model & Google Gemini.",
+  icons: {
+    icon: "/icon.png",
+    apple: "/icon.png",
+  },
+  openGraph: {
+    title: "Odyssey Arena",
+    description:
+      "Two players create characters and worlds with natural language, then battle in real-time AI-generated video.",
+    images: [{ url: "/splash.png", width: 1024, height: 512 }],
+    type: "website",
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "Odyssey Arena",
+    description:
+      "Live AI Battle Simulation — powered by Odyssey-2 Pro & Google Gemini",
+    images: ["/splash.png"],
+  },
 };
 
 export default function RootLayout({

@@ -71,9 +71,13 @@ export default function ArenaPage() {
       >
         {/* Header */}
         <motion.div variants={arenaVariants} className="text-center mb-4">
-          <h1 className="text-3xl font-bold text-white/90 tracking-tight">
-            ODYSSEY ARENA
-          </h1>
+          <div className="flex items-center justify-center gap-3">
+            <img
+              src="/logo.png"
+              alt="Odyssey Arena"
+              className="h-10 w-auto opacity-90"
+            />
+          </div>
           <p className="text-white/50 text-xs mt-1">
             Live AI Battle Simulation
           </p>
@@ -90,7 +94,11 @@ export default function ArenaPage() {
               className="flex-1 flex flex-col items-center justify-center gap-6"
             >
               <div className="glass rounded-3xl p-10 max-w-lg text-center space-y-6">
-                <div className="text-5xl">⚔️</div>
+                <img
+                  src="/logo.png"
+                  alt="Odyssey Arena"
+                  className="h-20 w-auto mx-auto opacity-90"
+                />
                 <h2 className="text-2xl font-bold text-white/90">
                   Ready for Battle?
                 </h2>

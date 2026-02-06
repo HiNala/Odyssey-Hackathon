@@ -32,6 +32,7 @@ export function VideoStream({ mediaStream, status, className }: VideoStreamProps
         autoPlay
         playsInline
         muted
+        aria-label="Live AI-generated battle stream"
         className="w-full h-full object-cover"
       />
 

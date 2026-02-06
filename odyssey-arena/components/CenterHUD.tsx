@@ -1,11 +1,11 @@
-'use client';
+﻿'use client';
 
 import { useRef, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { cn } from '@/lib/utils';
 import { hudVariants, vsPulseVariants, eventItemVariants } from '@/lib/animations';
 import { getMomentumColor } from '@/lib/scoring';
-import type { ArenaState, EventEntry } from '@/types/game';
+import type { ArenaState } from '@/types/game';
 
 interface CenterHUDProps {
   state: ArenaState;

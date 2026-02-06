@@ -1,82 +1,92 @@
-'use client'
+﻿'use client';
 
-import { useState } from 'react'
-import { cn } from '@/lib/utils'
+import { useState } from 'react';
+import { motion } from 'framer-motion';
+import { cn } from '@/lib/utils';
+import { promptBarVariants } from '@/lib/animations';
 
-type PromptInputProps = {
-  onSubmit?: (prompt: string, target: 'left' | 'right') => void
+interface PromptInputProps {
+  onSubmit: (prompt: string) => void;
+  disabled?: boolean;
+  activePlayer?: 1 | 2;
+  placeholder?: string;
 }
 
-export function PromptInput({ onSubmit }: PromptInputProps) {
-  const [prompt, setPrompt] = useState('')
-  const [activeTarget, setActiveTarget] = useState<'left' | 'right' | null>(null)
+export function PromptInput({
+  onSubmit,
+  disabled = false,
+  activePlayer = 1,
+  placeholder = 'Describe your action...',
+}: PromptInputProps) {
+  const [prompt, setPrompt] = useState('');
 
-  const handleSubmit = (target: 'left' | 'right') => {
-    if (!prompt.trim()) return
-    onSubmit?.(prompt, target)
-    setPrompt('')
-    setActiveTarget(null)
-  }
+  const handleSubmit = () => {
+    if (!prompt.trim() || disabled) return;
+    onSubmit(prompt.trim());
+    setPrompt('');
+  };
 
+  const accentClass =
+    activePlayer === 1
+      ? 'ring-player1-accent/40 focus-within:ring-player1-accent/60'
+      : 'ring-player2-accent/40 focus-within:ring-player2-accent/60';
 
   return (
-    <div className="glass rounded-full p-2 flex items-center gap-2 max-w-2xl mx-auto">
-      {/* Left Arrow */}
-      <button
-        onClick={() => handleSubmit('left')}
+    <motion.div
+      variants={promptBarVariants}
+      initial="hidden"
+      animate="visible"
+      className="w-full max-w-2xl mx-auto"
+    >
+      <div
         className={cn(
-          "flex-shrink-0 w-12 h-12 rounded-full",
-          "flex items-center justify-center",
-          "transition-all duration-200",
-          "hover:scale-110 active:scale-95",
-          activeTarget === 'left'
-            ? "bg-player1-accent text-white"
-            : "bg-white/10 text-white/60 hover:bg-white/20"
+          'glass rounded-full p-2 flex items-center gap-2 ring-1 transition-all',
+          accentClass,
+          disabled && 'opacity-50',
         )}
-        aria-label="Send to Player 1"
       >
-        <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
-        </svg>
-      </button>
+        <div
+          className={cn(
+            'flex-shrink-0 w-10 h-10 rounded-full flex items-center justify-center text-xs font-bold',
+            activePlayer === 1
+              ? 'bg-player1-accent/20 text-player1-accent'
+              : 'bg-player2-accent/20 text-player2-accent',
+          )}
+        >
+          P{activePlayer}
+        </div>
 
-      {/* Input */}
-      <input
-        type="text"
-        value={prompt}
-        onChange={(e) => setPrompt(e.target.value)}
-        onFocus={() => setActiveTarget(null)}
-        onKeyDown={(e) => {
-          if (e.key === 'Enter' && activeTarget) {
-            handleSubmit(activeTarget)
-          }
-        }}
-        placeholder="Enter your action..."
-        className={cn(
-          "flex-1 bg-transparent border-none outline-none",
-          "text-white placeholder:text-white/40",
-          "text-base px-4"
-        )}
-      />
+        <input
+          type="text"
+          value={prompt}
+          onChange={(e) => setPrompt(e.target.value)}
+          onKeyDown={(e) => {
+            if (e.key === 'Enter') handleSubmit();
+          }}
+          placeholder={placeholder}
+          disabled={disabled}
+          className="flex-1 bg-transparent border-none outline-none text-white placeholder:text-white/30 text-sm px-2 disabled:cursor-not-allowed"
+        />
 
-      {/* Right Arrow */}
-      <button
-        onClick={() => handleSubmit('right')}
-        className={cn(
-          "flex-shrink-0 w-12 h-12 rounded-full",
-          "flex items-center justify-center",
-          "transition-all duration-200",
-          "hover:scale-110 active:scale-95",
-          activeTarget === 'right'
-            ? "bg-player2-accent text-white"
-            : "bg-white/10 text-white/60 hover:bg-white/20"
-        )}
-        aria-label="Send to Player 2"
-      >
-        <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-        </svg>
-      </button>
-    </div>
-  )
+        <motion.button
+          whileHover={{ scale: disabled ? 1 : 1.05 }}
+          whileTap={{ scale: disabled ? 1 : 0.95 }}
+          onClick={handleSubmit}
+          disabled={disabled || !prompt.trim()}
+          className={cn(
+            'flex-shrink-0 w-10 h-10 rounded-full flex items-center justify-center transition-all',
+            'disabled:opacity-30 disabled:cursor-not-allowed',
+            activePlayer === 1
+              ? 'bg-player1-accent text-black hover:bg-player1-accent/80'
+              : 'bg-player2-accent text-white hover:bg-player2-accent/80',
+          )}
+          aria-label="Submit action"
+        >
+          <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M13 7l5 5m0 0l-5 5m5-5H6" />
+          </svg>
+        </motion.button>
+      </div>
+    </motion.div>
+  );
 }
