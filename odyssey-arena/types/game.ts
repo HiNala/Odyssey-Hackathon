@@ -37,6 +37,8 @@ export interface PlayerState {
   stats: PlayerStats;
   statusEffects: StatusEffect[];
   combo: ComboState;
+  evolutionLevel: EvolutionLevel;
+  evolutionHistory: EvolutionEvent[];
   streamId: string | null;
   isStreaming: boolean;
   isSetupComplete: boolean;
@@ -59,6 +61,17 @@ export interface EventEntry {
   impactType: ImpactType;
   comboCount?: number;
   statusApplied?: StatusEffectType;
+}
+
+/** Evolution levels: -2 (critical) to +2 (transcendent) */
+export type EvolutionLevel = -2 | -1 | 0 | 1 | 2;
+
+/** Record of an evolution event */
+export interface EvolutionEvent {
+  timestamp: number;
+  fromLevel: EvolutionLevel;
+  toLevel: EvolutionLevel;
+  trigger: string;
 }
 
 /** Game phases */
@@ -102,5 +115,6 @@ export type GameAction =
   | { type: 'RESOLVE_ACTION'; event: EventEntry }
   | { type: 'SWITCH_ACTIVE_PLAYER' }
   | { type: 'DECLARE_WINNER'; winner: 1 | 2 }
+  | { type: 'EVOLVE_PLAYER'; player: 1 | 2; newLevel: EvolutionLevel; trigger: string }
   | { type: 'REMATCH' }
   | { type: 'RESET_GAME' };

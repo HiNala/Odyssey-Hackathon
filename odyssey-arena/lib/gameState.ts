@@ -10,6 +10,7 @@ import type {
   GameAction,
   EventEntry,
   StatusEffect,
+  EvolutionLevel,
 } from '@/types/game';
 
 // ─── Initial State Factories ────────────────────────────────────────
@@ -28,6 +29,8 @@ export function createPlayerState(id: 1 | 2): PlayerState {
     stats: createDefaultStats(),
     statusEffects: [],
     combo: { lastActionType: '', count: 0 },
+    evolutionLevel: 0,
+    evolutionHistory: [],
     streamId: null,
     isStreaming: false,
     isSetupComplete: false,
@@ -307,8 +310,28 @@ export function gameReducer(
     case 'DECLARE_WINNER':
       return { ...state, phase: 'victory', winner: action.winner };
 
+    case 'EVOLVE_PLAYER': {
+      const clampedLevel = Math.max(-2, Math.min(2, action.newLevel)) as EvolutionLevel;
+      return {
+        ...state,
+        players: updatePlayer(state.players, action.player, (p) => ({
+          ...p,
+          evolutionLevel: clampedLevel,
+          evolutionHistory: [
+            ...p.evolutionHistory,
+            {
+              timestamp: Date.now(),
+              fromLevel: p.evolutionLevel,
+              toLevel: clampedLevel,
+              trigger: action.trigger,
+            },
+          ],
+        })),
+      };
+    }
+
     case 'REMATCH': {
-      // Keep characters and worlds, reset everything else for instant rematch
+      // Keep characters, worlds, and evolution levels — reset combat state
       const rematchPlayers: [PlayerState, PlayerState] = [
         { ...state.players[0], stats: createDefaultStats(), statusEffects: [], combo: { lastActionType: '', count: 0 } },
         { ...state.players[1], stats: createDefaultStats(), statusEffects: [], combo: { lastActionType: '', count: 0 } },

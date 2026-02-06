@@ -4,6 +4,7 @@ import { motion } from 'framer-motion';
 import { cn } from '@/lib/utils';
 import { victoryOverlayVariants } from '@/lib/animations';
 import { Trophy, RotateCcw, Swords, Flame, Zap, Shield, Users } from 'lucide-react';
+import { getEvolutionMeta } from '@/lib/evolution';
 import type { PlayerState, BattleStats } from '@/types/game';
 
 interface VictoryOverlayProps {
@@ -90,7 +91,17 @@ export function VictoryOverlay({
           >
             {winner.name} Wins!
           </motion.p>
-          <p className="text-text-muted text-xs">{winner.character}</p>
+          <p className="text-text-muted text-xs">
+            {winner.character}
+            {winner.evolutionLevel !== 0 && (
+              <span className="ml-1.5">
+                {getEvolutionMeta(winner.evolutionLevel).indicator}{' '}
+                <span className={getEvolutionMeta(winner.evolutionLevel).color}>
+                  {getEvolutionMeta(winner.evolutionLevel).name}
+                </span>
+              </span>
+            )}
+          </p>
           {turnCount != null && turnCount > 0 && (
             <p className="text-text-muted/60 text-[10px] tracking-widest uppercase">
               Decided in {turnCount} {turnCount === 1 ? 'turn' : 'turns'}

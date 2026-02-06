@@ -13,7 +13,8 @@ import {
 import { saveBattleRecord, updateGameStats } from '@/lib/storage';
 import { sanitizePrompt } from '@/lib/sanitize';
 import { actionRateLimiter } from '@/lib/rate-limiter';
-import type { ArenaState } from '@/types/game';
+import { evaluatePostBattleEvolution, buildEvolvedBattlePrompt } from '@/lib/evolution';
+import type { ArenaState, EvolutionLevel } from '@/types/game';
 
 /**
  * High-level game orchestration hook.
@@ -31,6 +32,13 @@ export function useGameFlow() {
   const odyssey = useOdysseyStream();
   const [isDemoMode, setIsDemoMode] = useState(false);
   const battleStreamLockRef = useRef(false);
+
+  // Evolution transformation state (consumed by page.tsx for the overlay)
+  const [transformationData, setTransformationData] = useState<{
+    characterName: string;
+    fromLevel: EvolutionLevel;
+    toLevel: EvolutionLevel;
+  } | null>(null);
 
   // ── Sync Odyssey status with game state ────────────────────────
   // When Odyssey disconnects (HMR, network drop, stale session) while the game
@@ -169,6 +177,40 @@ export function useGameFlow() {
       if (winner) {
         dispatch({ type: 'DECLARE_WINNER', winner });
 
+        // Evaluate evolution after the battle
+        const winnerPlayer = updatedState.players[winner - 1];
+        const loserPlayer = updatedState.players[winner === 1 ? 1 : 0];
+        const evoResult = evaluatePostBattleEvolution(
+          winnerPlayer,
+          loserPlayer,
+          state.battleStats,
+          updatedState.turnCount,
+        );
+
+        // Apply evolution state changes
+        if (evoResult.winnerChanged) {
+          dispatch({
+            type: 'EVOLVE_PLAYER',
+            player: evoResult.winnerId,
+            newLevel: evoResult.winnerNewLevel,
+            trigger: evoResult.winnerTrigger,
+          });
+          // Show transformation overlay for winner
+          setTransformationData({
+            characterName: winnerPlayer.character || winnerPlayer.name,
+            fromLevel: winnerPlayer.evolutionLevel,
+            toLevel: evoResult.winnerNewLevel,
+          });
+        }
+        if (evoResult.loserChanged) {
+          dispatch({
+            type: 'EVOLVE_PLAYER',
+            player: evoResult.loserId,
+            newLevel: evoResult.loserNewLevel,
+            trigger: evoResult.loserTrigger,
+          });
+        }
+
         // Persist battle record & stats to localStorage
         try {
           const p1 = updatedState.players[0];
@@ -200,10 +242,15 @@ export function useGameFlow() {
     dispatch({ type: 'RESET_GAME' });
   }, [odyssey, dispatch]);
 
-  // ── Rematch (keep characters, reset stats) ────────────────────
+  // ── Rematch (keep characters + evolution, reset stats) ────────
   const rematch = useCallback(() => {
     dispatch({ type: 'REMATCH' });
   }, [dispatch]);
+
+  // ── Clear transformation overlay ──────────────────────────────
+  const clearTransformation = useCallback(() => {
+    setTransformationData(null);
+  }, []);
 
   // ── Start Battle Stream ────────────────────────────────────────
   // Attempts to start the Odyssey stream for the battle view.
@@ -223,13 +270,22 @@ export function useGameFlow() {
     const p1 = state.players[0];
     const p2 = state.players[1];
 
-    // Build battle prompt using template system
+    // Build battle prompt — use evolution-aware prompts if characters have evolved
     const arena = p1.world || p2.world || undefined;
-    const prompt = buildBattleStartPrompt(
-      p1.character || p1.name,
-      p2.character || p2.name,
-      arena
-    );
+    const hasEvolution = p1.evolutionLevel !== 0 || p2.evolutionLevel !== 0;
+    const prompt = hasEvolution
+      ? buildEvolvedBattlePrompt(
+          p1.character || p1.name,
+          p2.character || p2.name,
+          p1.evolutionLevel,
+          p2.evolutionLevel,
+          arena,
+        )
+      : buildBattleStartPrompt(
+          p1.character || p1.name,
+          p2.character || p2.name,
+          arena,
+        );
 
     const maxAttempts = 3;
     for (let attempt = 1; attempt <= maxAttempts; attempt++) {
@@ -271,6 +327,8 @@ export function useGameFlow() {
     resetGame,
     rematch,
     startBattleStream,
+    transformationData,
+    clearTransformation,
   };
 }
 

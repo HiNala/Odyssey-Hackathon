@@ -12,11 +12,15 @@ import { SetupForm } from '@/components/SetupForm';
 import { VictoryOverlay } from '@/components/VictoryOverlay';
 import { DamagePopup } from '@/components/DamagePopup';
 import { BattleOverlays } from '@/components/BattleOverlays';
+import { TransformationOverlay } from '@/components/TransformationOverlay';
+import { EvolutionIndicator } from '@/components/EvolutionIndicator';
+import { AutoDemo } from '@/components/AutoDemo';
 import { useGameFlow } from '@/hooks/useGameFlow';
 import { arenaVariants } from '@/lib/animations';
 import { Loader2, User } from 'lucide-react';
 
 export default function ArenaPage() {
+  const [showIntro, setShowIntro] = useState(true);
   const {
     state,
     dispatch,
@@ -29,6 +33,8 @@ export default function ArenaPage() {
     resetGame,
     rematch,
     startBattleStream,
+    transformationData,
+    clearTransformation,
   } = useGameFlow();
 
   const { phase, players, activePlayer, winner, isProcessing } = state;
@@ -334,6 +340,7 @@ export default function ArenaPage() {
                       demoMode={isDemoMode}
                       playerName={p1.character || p1.name}
                     />
+                    <EvolutionIndicator level={p1.evolutionLevel} side="left" compact />
                   </PhoneFrame>
                   <DamagePopup
                     value={damagePopup.p1}
@@ -362,6 +369,7 @@ export default function ArenaPage() {
                       demoMode={isDemoMode}
                       playerName={p2.character || p2.name}
                     />
+                    <EvolutionIndicator level={p2.evolutionLevel} side="right" compact />
                   </PhoneFrame>
                   <DamagePopup
                     value={damagePopup.p2}
@@ -435,6 +443,21 @@ export default function ArenaPage() {
           />
         )}
       </AnimatePresence>
+
+      {/* Transformation overlay (evolution / devolution) */}
+      <AnimatePresence>
+        {transformationData && (
+          <TransformationOverlay
+            characterName={transformationData.characterName}
+            fromLevel={transformationData.fromLevel}
+            toLevel={transformationData.toLevel}
+            onComplete={clearTransformation}
+          />
+        )}
+      </AnimatePresence>
+
+      {/* Auto-playing intro for judges / first impressions */}
+      {showIntro && <AutoDemo onComplete={() => setShowIntro(false)} />}
     </ArenaBackground>
   );
 }
