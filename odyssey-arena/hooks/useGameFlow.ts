@@ -57,15 +57,25 @@ export function useGameFlow() {
   const startGame = useCallback(async () => {
     if (state.phase !== 'idle') return;
     try {
-      await odyssey.connect();
+      // Timeout Odyssey connection after 8 seconds so the game doesn't hang
+      const connectPromise = odyssey.connect();
+      const timeoutPromise = new Promise((_, reject) =>
+        setTimeout(() => reject(new Error('Connection timed out — starting in demo mode')), 8000)
+      );
+      await Promise.race([connectPromise, timeoutPromise]);
       dispatch({ type: 'CONNECT' });
     } catch (err) {
-      dispatch({
-        type: 'CONNECTION_ERROR',
-        error: err instanceof Error ? err.message : 'Connection failed',
-      });
+      console.warn('[GameFlow] Odyssey connection failed, proceeding in demo mode:', err);
+      // Still proceed to setup — game works without Odyssey video
+      dispatch({ type: 'CONNECT' });
     }
   }, [state.phase, odyssey, dispatch]);
+
+  // ── Start Demo Mode (skip Odyssey, test full UI flow) ──────────
+  const startDemoMode = useCallback(() => {
+    if (state.phase !== 'idle') return;
+    dispatch({ type: 'CONNECT' });
+  }, [state.phase, dispatch]);
 
   // ── Submit Character Setup (supports optional image for image-to-video) ──
   const submitCharacter = useCallback(
@@ -76,28 +86,31 @@ export function useGameFlow() {
       // Build prompt using template system (state descriptions, not action verbs)
       const prompt = buildCharacterPreviewPrompt(character, world);
 
-      try {
-        // Start a short preview stream so the player sees their character
-        // If image is provided, use image-to-video mode (per Odyssey SDK docs)
-        const streamId = image
-          ? await odyssey.startStream({ prompt, image })
-          : await odyssey.startStream(prompt);
-        dispatch({ type: 'START_STREAM', player, streamId });
+      // Check if Odyssey is actually connected before trying stream
+      const isOdysseyReady = odyssey.status === 'connected' || odyssey.status === 'streaming';
 
-        // Let it run briefly to establish the scene
-        await new Promise((r) => setTimeout(r, 4000));
+      if (isOdysseyReady) {
+        try {
+          const streamId = image
+            ? await odyssey.startStream({ prompt, image })
+            : await odyssey.startStream(prompt);
+          dispatch({ type: 'START_STREAM', player, streamId });
 
-        // End preview stream and mark setup complete
-        await odyssey.endStream();
-        dispatch({ type: 'END_STREAM', player });
-        dispatch({ type: 'COMPLETE_SETUP', player });
-        dispatch({ type: 'SET_PROCESSING', processing: false });
-      } catch (err) {
-        console.error('Setup stream failed:', err);
-        // Still mark complete so the game can proceed
-        dispatch({ type: 'COMPLETE_SETUP', player });
-        dispatch({ type: 'SET_PROCESSING', processing: false });
+          // Let it run briefly to establish the scene
+          await new Promise((r) => setTimeout(r, 4000));
+
+          await odyssey.endStream();
+          dispatch({ type: 'END_STREAM', player });
+        } catch (err) {
+          console.error('Setup stream failed:', err);
+        }
+      } else {
+        // Demo mode: brief delay to simulate setup
+        await new Promise((r) => setTimeout(r, 1500));
       }
+
+      dispatch({ type: 'COMPLETE_SETUP', player });
+      dispatch({ type: 'SET_PROCESSING', processing: false });
     },
     [odyssey, dispatch]
   );
@@ -299,6 +312,7 @@ export function useGameFlow() {
     dispatch,
     odyssey,
     startGame,
+    startDemoMode,
     submitCharacter,
     submitAction,
     resetGame,

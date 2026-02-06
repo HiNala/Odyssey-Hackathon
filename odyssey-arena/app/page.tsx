@@ -14,16 +14,19 @@ import { DamagePopup } from '@/components/DamagePopup';
 import { BattleOverlays } from '@/components/BattleOverlays';
 import { TransformationOverlay } from '@/components/TransformationOverlay';
 import { EvolutionIndicator } from '@/components/EvolutionIndicator';
+import { AutoDemo } from '@/components/AutoDemo';
 import { useGameFlow } from '@/hooks/useGameFlow';
 import { arenaVariants } from '@/lib/animations';
 import { User } from 'lucide-react';
 
 export default function ArenaPage() {
+  const [showIntro, setShowIntro] = useState(true);
   const {
     state,
     dispatch,
     odyssey,
     startGame,
+    startDemoMode,
     submitCharacter,
     submitAction,
     resetGame,
@@ -46,6 +49,12 @@ export default function ArenaPage() {
     if (p2Name.trim()) dispatch({ type: 'SET_PLAYER_NAME', player: 2, name: p2Name.trim() });
     startGame();
   }, [p1Name, p2Name, dispatch, startGame]);
+
+  const handleStartDemo = useCallback(() => {
+    if (p1Name.trim()) dispatch({ type: 'SET_PLAYER_NAME', player: 1, name: p1Name.trim() });
+    if (p2Name.trim()) dispatch({ type: 'SET_PLAYER_NAME', player: 2, name: p2Name.trim() });
+    startDemoMode();
+  }, [p1Name, p2Name, dispatch, startDemoMode]);
 
   useEffect(() => {
     if (phase === 'battle' && !p1.isStreaming && !p2.isStreaming) {
@@ -203,6 +212,14 @@ export default function ArenaPage() {
                   >
                     Start Game
                   </motion.button>
+                  <motion.button
+                    whileHover={{ scale: 1.01 }}
+                    whileTap={{ scale: 0.99 }}
+                    onClick={handleStartDemo}
+                    className="px-6 py-2 rounded-xl text-text-muted hover:text-text-secondary text-xs transition-colors"
+                  >
+                    Demo Mode (no API key required)
+                  </motion.button>
                 </div>
 
                 {/* Attribution */}
@@ -307,7 +324,6 @@ export default function ArenaPage() {
                       mediaStream={odyssey.mediaStream}
                       status={odyssey.status}
                       isActive={odyssey.status === 'streaming' || odyssey.status === 'connecting'}
-                      playerName={p1.character || p1.name}
                     />
                     <EvolutionIndicator level={p1.evolutionLevel} side="left" compact />
                   </PhoneFrame>
@@ -335,7 +351,6 @@ export default function ArenaPage() {
                       mediaStream={odyssey.mediaStream}
                       status={odyssey.status}
                       isActive={odyssey.status === 'streaming' || odyssey.status === 'connecting'}
-                      playerName={p2.character || p2.name}
                     />
                     <EvolutionIndicator level={p2.evolutionLevel} side="right" compact />
                   </PhoneFrame>
@@ -382,17 +397,23 @@ export default function ArenaPage() {
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
-              className="flex-1 flex flex-col lg:flex-row items-center justify-center gap-4 lg:gap-6 overflow-auto"
+              className="flex-1 flex flex-col"
             >
-              <PhoneFrame side="left" playerName={p1.character || p1.name}>
-                <OdysseyStream mediaStream={odyssey.mediaStream} status={odyssey.status} isActive={false} playerName={p1.character || p1.name} />
-              </PhoneFrame>
-              <div className="order-first lg:order-0 w-full lg:w-auto">
-                <CenterHUD state={state} />
+              <div className="flex-1 w-full grid grid-cols-1 lg:grid-cols-[minmax(0,1fr)_minmax(0,420px)_minmax(0,1fr)] items-center gap-4 lg:gap-6">
+                <div className="relative lg:justify-self-end">
+                  <PhoneFrame side="left" playerName={p1.character || p1.name}>
+                    <OdysseyStream mediaStream={odyssey.mediaStream} status={odyssey.status} isActive={false} />
+                  </PhoneFrame>
+                </div>
+                <div className="order-first lg:order-0 w-full lg:w-auto">
+                  <CenterHUD state={state} />
+                </div>
+                <div className="relative lg:justify-self-start">
+                  <PhoneFrame side="right" playerName={p2.character || p2.name}>
+                    <OdysseyStream mediaStream={odyssey.mediaStream} status={odyssey.status} isActive={false} />
+                  </PhoneFrame>
+                </div>
               </div>
-              <PhoneFrame side="right" playerName={p2.character || p2.name}>
-                <OdysseyStream mediaStream={odyssey.mediaStream} status={odyssey.status} isActive={false} playerName={p2.character || p2.name} />
-              </PhoneFrame>
             </motion.div>
           )}
         </AnimatePresence>
@@ -423,6 +444,9 @@ export default function ArenaPage() {
           />
         )}
       </AnimatePresence>
+
+      {/* Auto-playing intro for judges / first impressions */}
+      {showIntro && <AutoDemo onComplete={() => setShowIntro(false)} />}
     </ArenaBackground>
   );
 }
