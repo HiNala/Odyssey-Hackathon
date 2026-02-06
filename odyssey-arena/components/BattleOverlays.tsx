@@ -1,6 +1,6 @@
 'use client';
 
-import { useMemo, useRef, useEffect, useState } from 'react';
+import { useMemo, useRef, useEffect, useState, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { cn } from '@/lib/utils';
 import { Mic } from 'lucide-react';
@@ -12,7 +12,8 @@ interface BattleOverlaysProps {
 
 /**
  * BattleOverlays — Full-screen overlays for spectacle moments:
- * - Live ESPN-style commentary banner (shows Gemini narrative for EVERY action)
+ * - Live ESPN-style commentary banner (Gemini narrative for EVERY action)
+ * - Gemini-powered battle opening announcement
  * - Large combo counter (3+ combos)
  * - Situational hype callouts
  */
@@ -28,15 +29,37 @@ export function BattleOverlays({ state }: BattleOverlaysProps) {
   const [openingText, setOpeningText] = useState<string | null>(null);
   const prevEventIdRef = useRef<string | null>(null);
 
+  // Fetch opening commentary from Gemini
+  const fetchOpeningCommentary = useCallback(async () => {
+    const fallback = `${p1.character || p1.name} vs ${p2.character || p2.name} -- the battle begins!`;
+    try {
+      const res = await fetch('/api/commentary', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          type: 'opening',
+          character1: p1.character || p1.name,
+          character2: p2.character || p2.name,
+          world: p1.world || p2.world || null,
+        }),
+      });
+      const data = await res.json();
+      return data.commentary || fallback;
+    } catch {
+      return fallback;
+    }
+  }, [p1, p2]);
+
   // Battle opening commentary
   useEffect(() => {
     if (phase === 'battle' && eventLog.length === 0 && !openingShown) {
       setOpeningShown(true);
-      setOpeningText(`${p1.character || p1.name} vs ${p2.character || p2.name} -- the battle begins!`);
-      const timer = setTimeout(() => setOpeningText(null), 4000);
-      return () => clearTimeout(timer);
+      fetchOpeningCommentary().then((text) => {
+        setOpeningText(text);
+        setTimeout(() => setOpeningText(null), 5000);
+      });
     }
-  }, [phase, eventLog.length, openingShown, p1, p2]);
+  }, [phase, eventLog.length, openingShown, fetchOpeningCommentary]);
 
   useEffect(() => {
     if (latestEvent && latestEvent.id !== prevEventIdRef.current && latestEvent.result) {
@@ -188,7 +211,7 @@ export function BattleOverlays({ state }: BattleOverlaysProps) {
         )}
       </AnimatePresence>
 
-      {/* ── Battle Opening Commentary ── */}
+      {/* ── Battle Opening Commentary (Gemini-powered) ── */}
       <AnimatePresence>
         {openingText && (
           <motion.div

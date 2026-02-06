@@ -3,7 +3,7 @@
 import { memo, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { cn } from '@/lib/utils';
-import { Video, Wifi, AlertTriangle, Swords, Loader2 } from 'lucide-react';
+import { Video, Wifi, AlertTriangle, Loader2 } from 'lucide-react';
 import type { ConnectionStatus } from '@/lib/types';
 
 interface OdysseyStreamProps {
@@ -11,7 +11,6 @@ interface OdysseyStreamProps {
   status?: ConnectionStatus;
   className?: string;
   isActive?: boolean;
-  demoMode?: boolean;
   playerName?: string;
 }
 
@@ -24,7 +23,6 @@ export const OdysseyStream = memo(function OdysseyStream({
   status = 'disconnected',
   className = '',
   isActive = false,
-  demoMode = false,
 }: OdysseyStreamProps) {
   const videoRef = useRef<HTMLVideoElement>(null);
 
@@ -76,18 +74,8 @@ export const OdysseyStream = memo(function OdysseyStream({
             transition={{ duration: 0.3 }}
             className="absolute inset-0 flex flex-col items-center justify-center gap-3"
           >
-            {/* Demo mode */}
-            {demoMode && (
-              <div className="text-center space-y-3">
-                <div className="w-12 h-12 rounded-xl bg-fill-subtle border border-stroke-subtle flex items-center justify-center mx-auto">
-                  <Swords className="w-5 h-5 text-text-muted" />
-                </div>
-                <span className="text-[11px] text-text-muted font-medium tracking-wide uppercase">Demo Mode</span>
-              </div>
-            )}
-
             {/* Disconnected / idle */}
-            {!demoMode && (status === 'disconnected' || (!isActive && !mediaStream)) && (
+            {(status === 'disconnected' || (!isActive && !mediaStream)) && (
               <div className="text-center space-y-3">
                 <div className="w-12 h-12 rounded-xl bg-fill-subtle border border-stroke-subtle flex items-center justify-center mx-auto">
                   <Video className="w-5 h-5 text-text-muted" />
@@ -97,7 +85,7 @@ export const OdysseyStream = memo(function OdysseyStream({
             )}
 
             {/* Connecting */}
-            {!demoMode && (status === 'connecting' || status === 'authenticating' || status === 'reconnecting') && (
+            {(status === 'connecting' || status === 'authenticating' || status === 'reconnecting') && (
               <div className="text-center space-y-3">
                 <div className="w-12 h-12 rounded-xl bg-fill-subtle border border-stroke-subtle flex items-center justify-center mx-auto">
                   <Loader2 className="w-5 h-5 text-text-secondary animate-spin" />
@@ -116,7 +104,7 @@ export const OdysseyStream = memo(function OdysseyStream({
             )}
 
             {/* Connected, starting stream */}
-            {!demoMode && status === 'connected' && isActive && !mediaStream && (
+            {status === 'connected' && isActive && !mediaStream && (
               <div className="text-center space-y-3">
                 <div className="w-12 h-12 rounded-xl bg-fill-subtle border border-stroke-subtle flex items-center justify-center mx-auto">
                   <Wifi className="w-5 h-5 text-success/60 animate-pulse-subtle" />
@@ -126,7 +114,7 @@ export const OdysseyStream = memo(function OdysseyStream({
             )}
 
             {/* Error */}
-            {!demoMode && (status === 'error' || status === 'failed') && (
+            {(status === 'error' || status === 'failed') && (
               <div className="text-center space-y-3">
                 <div className="w-12 h-12 rounded-xl bg-danger/10 border border-danger/20 flex items-center justify-center mx-auto">
                   <AlertTriangle className="w-5 h-5 text-danger/70" />

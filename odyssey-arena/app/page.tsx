@@ -14,20 +14,16 @@ import { DamagePopup } from '@/components/DamagePopup';
 import { BattleOverlays } from '@/components/BattleOverlays';
 import { TransformationOverlay } from '@/components/TransformationOverlay';
 import { EvolutionIndicator } from '@/components/EvolutionIndicator';
-import { AutoDemo } from '@/components/AutoDemo';
 import { useGameFlow } from '@/hooks/useGameFlow';
 import { arenaVariants } from '@/lib/animations';
-import { Loader2, User } from 'lucide-react';
+import { User } from 'lucide-react';
 
 export default function ArenaPage() {
-  const [showIntro, setShowIntro] = useState(true);
   const {
     state,
     dispatch,
     odyssey,
-    isDemoMode,
     startGame,
-    startDemoMode,
     submitCharacter,
     submitAction,
     resetGame,
@@ -51,17 +47,11 @@ export default function ArenaPage() {
     startGame();
   }, [p1Name, p2Name, dispatch, startGame]);
 
-  const handleStartDemo = useCallback(() => {
-    if (p1Name.trim()) dispatch({ type: 'SET_PLAYER_NAME', player: 1, name: p1Name.trim() });
-    if (p2Name.trim()) dispatch({ type: 'SET_PLAYER_NAME', player: 2, name: p2Name.trim() });
-    startDemoMode();
-  }, [p1Name, p2Name, dispatch, startDemoMode]);
-
   useEffect(() => {
-    if (phase === 'battle' && !isDemoMode && !p1.isStreaming && !p2.isStreaming) {
+    if (phase === 'battle' && !p1.isStreaming && !p2.isStreaming) {
       startBattleStream();
     }
-  }, [phase, isDemoMode, p1.isStreaming, p2.isStreaming, startBattleStream]);
+  }, [phase, p1.isStreaming, p2.isStreaming, startBattleStream]);
 
   // Screen shake on impact
   const shakeControls = useAnimationControls();
@@ -213,14 +203,6 @@ export default function ArenaPage() {
                   >
                     Start Game
                   </motion.button>
-                  <motion.button
-                    whileHover={{ scale: 1.01 }}
-                    whileTap={{ scale: 0.99 }}
-                    onClick={handleStartDemo}
-                    className="px-6 py-2 rounded-xl text-text-muted hover:text-text-secondary text-xs transition-colors"
-                  >
-                    Demo Mode (no API key required)
-                  </motion.button>
                 </div>
 
                 {/* Attribution */}
@@ -262,7 +244,7 @@ export default function ArenaPage() {
               </div>
 
               {/* Preview stream */}
-              {isProcessing && !isDemoMode && (
+              {isProcessing && (
                 <motion.div
                   initial={{ opacity: 0, scale: 0.95 }}
                   animate={{ opacity: 1, scale: 1 }}
@@ -279,18 +261,6 @@ export default function ArenaPage() {
                       isActive
                     />
                   </PhoneFrame>
-                </motion.div>
-              )}
-
-              {/* Demo processing */}
-              {isProcessing && isDemoMode && (
-                <motion.div
-                  initial={{ opacity: 0 }}
-                  animate={{ opacity: 1 }}
-                  className="flex items-center gap-3 px-5 py-3 rounded-xl border border-border bg-surface text-text-muted text-sm"
-                >
-                  <Loader2 className="w-4 h-4 animate-spin" />
-                  Generating world preview...
                 </motion.div>
               )}
             </motion.div>
@@ -337,7 +307,6 @@ export default function ArenaPage() {
                       mediaStream={odyssey.mediaStream}
                       status={odyssey.status}
                       isActive={odyssey.status === 'streaming' || odyssey.status === 'connecting'}
-                      demoMode={isDemoMode}
                       playerName={p1.character || p1.name}
                     />
                     <EvolutionIndicator level={p1.evolutionLevel} side="left" compact />
@@ -366,7 +335,6 @@ export default function ArenaPage() {
                       mediaStream={odyssey.mediaStream}
                       status={odyssey.status}
                       isActive={odyssey.status === 'streaming' || odyssey.status === 'connecting'}
-                      demoMode={isDemoMode}
                       playerName={p2.character || p2.name}
                     />
                     <EvolutionIndicator level={p2.evolutionLevel} side="right" compact />
@@ -417,13 +385,13 @@ export default function ArenaPage() {
               className="flex-1 flex flex-col lg:flex-row items-center justify-center gap-4 lg:gap-6 overflow-auto"
             >
               <PhoneFrame side="left" playerName={p1.character || p1.name}>
-                <OdysseyStream mediaStream={odyssey.mediaStream} status={odyssey.status} isActive={false} demoMode={isDemoMode} playerName={p1.character || p1.name} />
+                <OdysseyStream mediaStream={odyssey.mediaStream} status={odyssey.status} isActive={false} playerName={p1.character || p1.name} />
               </PhoneFrame>
               <div className="order-first lg:order-0 w-full lg:w-auto">
                 <CenterHUD state={state} />
               </div>
               <PhoneFrame side="right" playerName={p2.character || p2.name}>
-                <OdysseyStream mediaStream={odyssey.mediaStream} status={odyssey.status} isActive={false} demoMode={isDemoMode} playerName={p2.character || p2.name} />
+                <OdysseyStream mediaStream={odyssey.mediaStream} status={odyssey.status} isActive={false} playerName={p2.character || p2.name} />
               </PhoneFrame>
             </motion.div>
           )}
@@ -455,9 +423,6 @@ export default function ArenaPage() {
           />
         )}
       </AnimatePresence>
-
-      {/* Auto-playing intro for judges / first impressions */}
-      {showIntro && <AutoDemo onComplete={() => setShowIntro(false)} />}
     </ArenaBackground>
   );
 }

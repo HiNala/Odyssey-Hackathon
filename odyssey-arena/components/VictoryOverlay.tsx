@@ -1,9 +1,10 @@
 'use client';
 
+import { useEffect, useState } from 'react';
 import { motion } from 'framer-motion';
 import { cn } from '@/lib/utils';
 import { victoryOverlayVariants } from '@/lib/animations';
-import { Trophy, RotateCcw, Swords, Flame, Zap, Shield, Users } from 'lucide-react';
+import { Trophy, Swords, Flame, Zap, Shield, Users, Mic } from 'lucide-react';
 import { getEvolutionMeta } from '@/lib/evolution';
 import type { PlayerState, BattleStats } from '@/types/game';
 
@@ -39,6 +40,32 @@ export function VictoryOverlay({
         : turnCount != null && turnCount <= 5
           ? 'DOMINATION'
           : 'VICTORY';
+
+  // Fetch closing commentary from Gemini
+  const [closingCommentary, setClosingCommentary] = useState<string | null>(null);
+  useEffect(() => {
+    async function fetchClosing() {
+      try {
+        const res = await fetch('/api/commentary', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            type: 'closing',
+            winner: winner.character || winner.name,
+            loser: loser.character || loser.name,
+            turns: turnCount ?? 0,
+            victoryType: victoryType === 'FLAWLESS VICTORY' ? 'flawless' : victoryType === 'COMEBACK VICTORY' ? 'comeback' : 'standard',
+          }),
+        });
+        const data = await res.json();
+        if (data.commentary) setClosingCommentary(data.commentary);
+      } catch {
+        // Best-effort
+      }
+    }
+    fetchClosing();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const victoryColor =
     victoryType === 'FLAWLESS VICTORY'
@@ -108,6 +135,26 @@ export function VictoryOverlay({
             </p>
           )}
         </motion.div>
+
+        {/* Closing Commentary from Gemini */}
+        {closingCommentary && (
+          <motion.div
+            initial={{ opacity: 0, y: 15 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.4 }}
+            className="rounded-2xl bg-white/5 border border-white/10 backdrop-blur-xl px-5 py-3 text-center"
+          >
+            <div className="flex items-center justify-center gap-2 mb-1">
+              <Mic className="w-3.5 h-3.5 text-white/50" strokeWidth={2} />
+              <span className="text-[9px] font-bold uppercase tracking-widest text-white/40">
+                Commentary
+              </span>
+            </div>
+            <p className="text-sm text-text-primary font-medium italic">
+              &ldquo;{closingCommentary}&rdquo;
+            </p>
+          </motion.div>
+        )}
 
         {/* Battle Stats Card */}
         {battleStats && (

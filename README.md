@@ -1,311 +1,107 @@
 # Odyssey Arena
 
-> **Two players. AI-generated worlds. Real-time battle.**
+## Live AI Battle Simulation with Real-Time Commentary
 
-Odyssey Arena is a live AI battle simulation built for the [Odyssey ML Hackathon](https://developer.odyssey.ml). Two players create characters and worlds using natural language, then battle through descriptive prompts — all rendered in real-time by the **Odyssey-2 Pro** world model with **Google Gemini 3 Flash** providing intelligent narration.
+> The first game where AI generates both the battle visuals AND live play-by-play commentary
+
+Two players create characters, place them in AI-generated worlds, and battle in real-time -- with ESPN-style live commentary powered by Google Gemini narrating every move. Every frame is generated live by Odyssey-2 Pro. No pre-rendered assets, no scripted animations -- just pure emergent gameplay.
+
+**GitHub:** [github.com/HiNala/Odyssey-Hackathon](https://github.com/HiNala/Odyssey-Hackathon)
+
+---
+
+## What Makes This Different
+
+**Every other Odyssey project:** "Look at this AI-generated video"
+
+**Odyssey Arena:** "Watch characters battle with live AI commentary that makes you feel like you're watching ESPN"
+
+### The Innovation
+
+- **Dual AI System**: Odyssey generates visuals, Gemini generates commentary
+- **Real-Time Commentary**: Every action gets instant announcer-style narration displayed as a prominent banner
+- **World Model as Game Engine**: Odyssey-2 Pro isn't just rendering video -- it IS the game engine, reacting to player actions frame-by-frame
+- **No Pre-Rendered Assets**: Every pixel and every word of commentary generated live by AI
+
+---
+
+## Features
+
+| Category | Features |
+|----------|----------|
+| **AI Commentary** | Live ESPN-style banners, battle opening/closing narration, hype callouts |
+| **AI Video** | Odyssey-2 Pro real-time streams that react to player actions |
+| **Battle System** | Momentum, power, defense, energy -- reach 100 momentum to win |
+| **Combat Depth** | Combo chains, 5 status effects (burning, frozen, powered, weakened, shielded) |
+| **Impact Feedback** | Screen shake, CRITICAL! overlays, damage popups, dynamic commentary |
+| **Quick Actions** | Attack, Defend, Special, Taunt with energy costs |
+| **Victory** | Flawless Victory / Comeback / Domination classifications + full battle report |
+| **Demo Mode** | Full game flow without API keys for instant testing |
+| **Polish** | Custom player names, stalemate prevention, auto-demo intro |
 
 ---
 
 ## How It Works
 
 ```
-Player Prompt → Gemini AI (narration + scoring) → Odyssey-2 Pro (live video) → Arena UI
+Player Action
+    |
+    v
+Gemini AI --> Narrative Commentary + Stat Changes (bounded ranges)
+    |
+    v
+Odyssey-2 Pro --> Live Video Stream (reacts to action)
+    |
+    v
+Game State Update --> Commentary Banner + Event Log --> Victory Check
 ```
 
-1. **Setup Phase** — Each player describes a character and world. Odyssey generates a cinematic live preview.
-2. **Battle Phase** — Players alternate submitting actions via natural language. The AI analyzes keywords, calculates stat impacts, generates dramatic narration, and renders the scene in real-time video.
-3. **Victory Phase** — When a player's momentum hits 100 (or their opponent's hits 0), the battle ends with a celebration.
+**Three AI systems orchestrated in real-time:**
 
-### The Single-Session Challenge
-
-Odyssey-2 Pro limits API keys to **1 concurrent video stream**. Odyssey Arena solves this with time-sharing: during setup, players take turns generating previews; during battle, only the active player's action is streamed live while both screens maintain context.
-
----
-
-## Game Mechanics
-
-### Stats (all 0–100)
-
-| Stat | Role | Start | Win Condition |
-|------|------|-------|---------------|
-| **Momentum** | Primary score | 50 | Reach 100 (or opponent reaches 0) |
-| **Power** | Offensive multiplier | 50 | Boosts momentum gains |
-| **Defense** | Damage reduction | 50 | Reduces momentum losses |
-| **Energy** | Action fuel | 100 | Actions cost energy; regenerates 5/turn |
-
-### Action Resolution
-
-Player prompts are analyzed for keywords to determine:
-- **Type**: offensive / defensive / special / neutral
-- **Intensity**: weak (4) → normal (8) → strong (13) → devastating (20) base momentum
-- **Impact**: critical / strong / normal / weak / miss — drives UI effects and narration
-
-Example: *"Unleashes a devastating plasma blade"* → Special + Devastating → ~30 momentum swing + screen shake + dramatic narration.
-
-### Quick Actions
-
-Pre-built action buttons for fast gameplay:
-- **Attack** — Strike with force (offensive)
-- **Defend** — Brace defensively (defensive, low energy cost)
-- **Special** — Unleash signature power (1.5x multiplier, 1.5x energy cost)
-- **Taunt** — Intimidate opponent (neutral)
+1. **Odyssey-2 Pro** -- Generates live video of the battle scene, reacting to each action
+2. **Google Gemini** -- Analyzes actions, generates vivid narrative commentary, calculates balanced stat changes
+3. **Commentary Engine** -- Surfaces narratives as prominent ESPN-style banners with player-colored borders and impact badges
 
 ---
 
 ## Tech Stack
 
-| Layer | Technology | Purpose |
-|-------|-----------|---------|
-| **Framework** | Next.js 16.1.6 (App Router) | Server/client rendering, API routes |
-| **Language** | TypeScript 5 | Type safety across the codebase |
-| **AI Video** | [Odyssey-2 Pro SDK](https://developer.odyssey.ml) (`@odysseyml/odyssey`) | Real-time interactive video generation |
-| **AI Text** | [Google Gemini 3 Flash](https://ai.google.dev) (`@google/generative-ai`) | Battle narration, visual prompts, scoring |
-| **Styling** | Tailwind CSS 4 | Glassmorphism UI with custom utilities |
-| **Animation** | Framer Motion 12 | Spring physics, entrance animations, impact effects |
-| **State** | React useReducer + Context | Full game state machine, no external libs |
-| **UI Utils** | clsx + tailwind-merge | Conditional class composition |
+| Layer | Technology |
+|-------|-----------|
+| Framework | Next.js 16 (App Router) |
+| Language | TypeScript 5 |
+| Styling | Tailwind CSS v4 |
+| Animation | Framer Motion |
+| AI Video | Odyssey-2 Pro SDK |
+| AI Narrative | Google Gemini API |
+| State | React useReducer + Context |
+| Icons | Lucide React |
 
 ---
 
-## Architecture
-
-### State Machine
-
-```
-IDLE  →  SETUP  →  BATTLE  →  VICTORY
- ↑                                |
- └────────── RESET ───────────────┘
-```
-
-All state transitions flow through a single `gameReducer` with 14 action types:
-
-```
-CONNECT / DISCONNECT / CONNECTION_ERROR
-SET_PLAYER_NAME / SET_CHARACTER
-START_STREAM / END_STREAM / COMPLETE_SETUP
-START_BATTLE / SET_PROCESSING
-RESOLVE_ACTION / SWITCH_ACTIVE_PLAYER
-DECLARE_WINNER / RESET_GAME
-```
-
-### Project Structure
-
-```
-Odyssey-Hackathon/
-├── README.md
-├── .gitignore
-│
-├── odyssey-arena/                  # Next.js application
-│   ├── app/
-│   │   ├── layout.tsx              # Root layout (Geist fonts, metadata)
-│   │   ├── page.tsx                # Main arena page
-│   │   ├── globals.css             # Tailwind config, gradient bg, glass utilities
-│   │   └── api/
-│   │       └── generate/
-│   │           └── route.ts        # POST /api/generate — Gemini server endpoint
-│   │
-│   ├── components/
-│   │   ├── ArenaBackground.tsx     # Gradient bg with floating blur orbs
-│   │   ├── PhoneFrame.tsx          # Glassmorphism phone wrapper (left/right variants)
-│   │   ├── OdysseyStream.tsx       # Video element for Odyssey MediaStream
-│   │   ├── CenterHUD.tsx           # VS badge, stats, event log, status
-│   │   ├── PromptInput.tsx         # Bottom input bar with player target arrows
-│   │   ├── CharacterForm.tsx       # Character creation form (name, archetype, desc)
-│   │   ├── CharacterCard.tsx       # Character display card
-│   │   ├── ActionButtons.tsx       # Quick action grid (attack/defend/special/taunt)
-│   │   └── VideoStream.tsx         # Video stream display component
-│   │
-│   ├── hooks/
-│   │   ├── useOdysseyStream.ts     # Odyssey SDK connection lifecycle management
-│   │   └── useGameFlow.ts          # High-level game orchestration (combines state + SDK)
-│   │
-│   ├── context/
-│   │   └── GameContext.tsx          # React Context + useReducer for global game state
-│   │
-│   ├── lib/
-│   │   ├── odyssey-client.ts       # Singleton Odyssey SDK client
-│   │   ├── gemini-client.ts        # Gemini AI client (narration, visual prompts)
-│   │   ├── gameState.ts            # Game reducer, selectors, victory conditions
-│   │   ├── scoring.ts              # Action analysis, momentum calc, narrative gen
-│   │   ├── prompt-templates.ts     # Odyssey prompt templates & arena presets
-│   │   ├── game-logic.ts           # Damage calculation, stat application, battle checks
-│   │   ├── animations.ts           # Framer Motion variants (spring, shake, glow, etc.)
-│   │   ├── types.ts                # Shared TypeScript types
-│   │   └── utils.ts                # cn() utility (clsx + tailwind-merge)
-│   │
-│   ├── types/
-│   │   └── game.ts                 # Game-specific types (ArenaState, PlayerStats, etc.)
-│   │
-│   ├── .env.example                # Environment variable template
-│   ├── .env.local                  # Actual keys (git-ignored)
-│   ├── package.json
-│   ├── tsconfig.json
-│   ├── next.config.ts
-│   └── postcss.config.mjs
-│
-├── docs/                           # Design & implementation specs
-│   ├── 00-MASTER-PLAN.md           # Project overview, architecture, build order
-│   ├── design/
-│   │   ├── 01-visual-style.md      # Color palette, glassmorphism, typography
-│   │   ├── 02-layout.md            # Grid structure, z-index, responsive breakpoints
-│   │   ├── 03-components.md        # Component hierarchy and specifications
-│   │   └── 04-animations.md        # Framer Motion variants, timing, easing
-│   ├── game-logic/
-│   │   ├── 01-game-state.md        # State types, reducer, selectors
-│   │   ├── 02-odyssey-integration.md  # SDK patterns, single-session handling
-│   │   ├── 03-game-flow.md         # Phase transitions, demo script
-│   │   └── 04-scoring-system.md    # Stat formulas, action analysis, narratives
-│   └── missions/
-│       ├── MISSION-01.md           # Foundation & core setup
-│       ├── MISSION-02.md           # Odyssey SDK integration
-│       ├── MISSION-03.md           # Game logic & state management
-│       ├── MISSION-04.md           # UI polish & animations
-│       └── MISSION-05.md           # Final polish & demo readiness
-│
-└── odyssey-docs/                   # Odyssey SDK reference documentation
-    ├── 00-README.md
-    ├── 01-introduction.md          # What is Odyssey-2 Pro (world model vs video model)
-    ├── 02-odyssey2-overview.md     # Architecture, frame-by-frame prediction
-    ├── 03-api-quickstart.md        # Connection lifecycle, code examples
-    ├── 04-interaction-tips.md      # Prompt engineering (state desc vs action verbs)
-    ├── js/
-    │   ├── 01-overview.md          # JS SDK overview
-    │   ├── 02-odyssey-class.md     # Odyssey class API reference
-    │   ├── 03-react-hook.md        # useOdyssey hook
-    │   ├── 04-recordings.md        # Stream recording retrieval
-    │   ├── 05-simulations.md       # Simulate API (async batch generation)
-    │   ├── 06-types.md             # TypeScript type definitions
-    │   └── 07-examples.md          # Usage examples
-    └── python/
-        ├── 01-overview.md          # Python SDK overview
-        ├── 02-client.md            # Python client
-        ├── 03-recordings.md        # Recording retrieval
-        ├── 04-simulations.md       # Simulate API
-        ├── 05-types.md             # Python types
-        └── 06-examples.md          # Python examples
-```
-
----
-
-## Design System
-
-### Visual Language
-
-**Apple "Liquid Glass" aesthetic** — soft gradients, glassmorphism panels, minimal chrome so the AI-generated video takes center stage.
-
-- **Background**: Sky blue (#E0F2FE) → Cotton candy pink (#FCE7F3) at 135°
-- **Glass panels**: `bg-white/10`, `backdrop-blur-xl`, `border-white/20`
-- **Player 1**: Amber (#F59E0B) accents
-- **Player 2**: Purple (#8B5CF6) accents
-- **Typography**: Geist Sans / Geist Mono (system fallbacks)
-
-### Layout
-
-Three-column arena: **Phone 1** (left) | **Center HUD** | **Phone 2** (right), with a fixed prompt bar at the bottom.
-
-- Phone frames: Glassmorphism wrappers with notch decoration, 384px max width
-- Center HUD: VS badge, HP bars, event log, connection status
-- Prompt bar: Rounded-full glass input with directional player-target arrows
-
-### Animations
-
-Centralized Framer Motion variants in `lib/animations.ts`:
-
-| Animation | Trigger | Effect |
-|-----------|---------|--------|
-| Phone entrance | Page load | Slide from sides with spring physics |
-| Phone float | Continuous | Gentle vertical bobbing (3.5s cycle) |
-| Active glow | Player's turn | Pulsing box-shadow on active phone |
-| VS pulse | Continuous | Scale/opacity pulse on VS badge |
-| Impact shake | Critical hit | Screen shake (intensity varies by impact) |
-| Event slide-in | New event | Slide + fade from left with spring |
-| Victory overlay | Game end | Fade + scale entrance with stagger |
-| Prompt bar | Page load | Slide up from bottom with delay |
-
----
-
-## API Routes
-
-### `POST /api/generate`
-
-Server-side Gemini AI endpoint. Keeps the API key secure (never exposed to the client).
-
-**Request body:**
-
-```json
-{
-  "type": "narration | visual | general",
-  "prompt": "Player 1 unleashes a devastating fire attack",
-  "context": {
-    "player1Character": "Fire Mage",
-    "player2Character": "Ice Knight",
-    "world": "Volcanic Arena",
-    "previousEvents": ["Ice Knight raised a frost shield"]
-  }
-}
-```
-
-**Response:**
-
-```json
-{
-  "result": "The Fire Mage channels molten fury through ancient runes..."
-}
-```
-
-| Type | Purpose | System Prompt |
-|------|---------|---------------|
-| `general` | Free-form generation | None |
-| `narration` | Battle narration | Theatrical, 2-3 sentences, dramatic |
-| `visual` | Scene for Odyssey | Visual only, no dialogue, lighting/pose focus |
-
----
-
-## Arena Presets
-
-Pre-built world templates in `lib/prompt-templates.ts` for quick setup:
-
-| Arena | Description |
-|-------|-------------|
-| **Ancient Coliseum** | Ruined Roman coliseum at golden hour with crumbling pillars |
-| **Volcanic Ruins** | Cracked obsidian platform surrounded by flowing lava |
-| **Frozen Tundra** | Icy wasteland with towering glaciers and northern lights |
-| **Neon District** | Rain-soaked cyberpunk rooftop at night |
-| **Mystic Forest** | Enchanted clearing with bioluminescent plants |
-
----
-
-## Getting Started
+## Quick Start
 
 ### Prerequisites
 
-- **Node.js** 18+
-- **npm** (or yarn/pnpm)
-- [Odyssey API Key](https://developer.odyssey.ml/dashboard)
+- Node.js 18+
+- [Odyssey API Key](https://developer.odyssey.ml)
 - [Google Gemini API Key](https://aistudio.google.com/apikey)
 
-### Installation
+### Setup
 
 ```bash
-# Clone
 git clone https://github.com/HiNala/Odyssey-Hackathon.git
 cd Odyssey-Hackathon/odyssey-arena
-
-# Install dependencies
-npm install
-
-# Configure environment
-cp .env.example .env.local
-# Edit .env.local with your API keys
+npm install --legacy-peer-deps
 ```
 
-### Environment Variables
+Create `odyssey-arena/.env.local`:
 
-| Variable | Required | Scope | Description |
-|----------|----------|-------|-------------|
-| `NEXT_PUBLIC_ODYSSEY_API_KEY` | Yes | Client | Odyssey ML API key |
-| `GEMINI_API_KEY` | Yes | Server | Google Gemini API key |
-| `GEMINI_MODEL` | No | Server | Model name (default: `gemini-3-flash-preview`) |
+```env
+NEXT_PUBLIC_ODYSSEY_API_KEY=ody_your_key_here
+GEMINI_API_KEY=your_gemini_key_here
+GEMINI_MODEL=gemini-3-flash-preview
+```
 
 ### Run
 
@@ -313,77 +109,108 @@ cp .env.example .env.local
 npm run dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000).
-
-### Available Scripts
-
-| Command | Description |
-|---------|-------------|
-| `npm run dev` | Start development server |
-| `npm run build` | Production build |
-| `npm run start` | Start production server |
-| `npm run lint` | Run ESLint |
+Open [http://localhost:3000](http://localhost:3000). Click **Demo Mode** to play without API keys.
 
 ---
 
-## Demo Script (90 seconds)
+## How to Play
 
-For hackathon presentation:
+1. **Enter Names** -- Personalize player names on the start screen
+2. **Create Characters** -- Describe each character and their world (or pick a preset)
+3. **Battle** -- Use quick action buttons or type creative custom prompts
+4. **Win** -- Drive your momentum to 100 (or your opponent's to 0)
 
-| Time | Action |
-|------|--------|
-| 0:00 | *"This is Odyssey Arena — two players, AI-generated worlds, real-time battle."* |
-| 0:10 | Click **Start Game** → connects to Odyssey |
-| 0:15 | P1 Setup: **"Cyberpunk samurai with plasma katana"** in **"Neon Tokyo rooftop"** |
-| 0:30 | P2 Setup: **"Dragon mage in crystal armor"** in **"Volcanic crystal palace"** |
-| 0:45 | Battle Round 1 (P1): *"Devastating plasma blade slash"* |
-| 1:00 | Battle Round 2 (P2): *"Storm of crystalline shards"* |
-| 1:15 | Battle Round 3 (P1): *"Channels the power grid for ultimate strike"* |
-| 1:20 | Victory → Celebration animation |
+| Action | Effect | Energy Cost |
+|--------|--------|-------------|
+| Attack | Deal damage, gain momentum | 10 |
+| Defend | Boost defense, recover energy | 7 |
+| Special | High risk/reward, big momentum swing | 25 |
+| Taunt | Drain opponent energy | 5 |
 
-### Prompt Tips
-
-- **DO** use state descriptions: *"is wielding a glowing sword"* (stable)
-- **DON'T** use action verbs: *"picks up the sword"* (may cause animation loops)
-- Be visual and specific: lighting, colors, materials, camera angles
-- Longer, more dramatic prompts → higher impact scores
+**Pro tip:** Creative, descriptive prompts score higher impact than generic ones.
 
 ---
 
-## Odyssey SDK Key Concepts
+## Architecture
 
-**Odyssey-2 Pro** is a *world model*, not a video model. It predicts one frame at a time (~50ms), reacting to user input in real-time. Think of it as an AI game engine.
+### Game State Machine
 
-```typescript
-// Connection lifecycle
-const client = new Odyssey({ apiKey: 'ody_...' });
-const mediaStream = await client.connect();       // WebRTC stream
-const streamId = await client.startStream({ prompt: '...' });
-await client.interact({ prompt: '...' });          // Change scene mid-stream
-await client.endStream();
-client.disconnect();                               // Always disconnect!
+```
+IDLE --> SETUP --> BATTLE --> VICTORY
+  ^                            |
+  +-------- RESET ------------+
 ```
 
-- **1 session per API key** — always disconnect to avoid 40-second lockout
-- **Portrait mode**: 704x1280 (used for phone frames)
-- **Recordings**: Retrieve video/events/thumbnails after stream ends
-- **Simulations**: Async batch generation for pre-scripted sequences
+14 action types flow through a single `gameReducer` with discriminated unions for type safety.
+
+### Key Technical Decisions
+
+- **3-Layer Prompt System**: Base world + character injection + action prompts using state descriptions (prevents Odyssey animation looping)
+- **Singleton Odyssey Client**: One session per API key with automatic reconnection and exponential backoff
+- **Bounded AI Stat Changes**: Gemini follows strict numerical ranges for balanced, predictable gameplay
+- **Passive Energy Regeneration**: +3 energy/turn prevents stalemates
+- **30-Turn Stalemate Resolution**: Auto-declares winner by momentum if battle runs long
+
+### Project Structure
+
+```
+odyssey-arena/
+  app/
+    page.tsx              # Main arena (all game phases)
+    layout.tsx            # Root layout + providers
+    globals.css           # Tailwind v4 + design system
+    api/gemini/           # Gemini AI route (server-side, key never exposed)
+  components/
+    AutoDemo.tsx          # Auto-playing intro sequence
+    BattleOverlays.tsx    # Live commentary banners + combo counter + hype callouts
+    ArenaBackground.tsx   # Atmospheric gradient background
+    PhoneFrame.tsx        # Video container with player accent borders
+    OdysseyStream.tsx     # Odyssey video stream + status overlays
+    CenterHUD.tsx         # Momentum bars, energy bars, stats, event log
+    ActionButtons.tsx     # Quick battle actions with glow effects
+    PromptInput.tsx       # Custom action input
+    SetupForm.tsx         # Character + world creation with presets
+    VictoryOverlay.tsx    # Battle report + victory classification
+    DamagePopup.tsx       # Floating momentum change numbers
+  hooks/
+    useGameFlow.ts        # Game orchestration (combines state + SDK)
+    useOdysseyStream.ts   # Odyssey SDK connection lifecycle
+  lib/
+    gameState.ts          # Reducer, selectors, victory conditions
+    scoring.ts            # AI-enhanced stat calculation + narrative
+    prompt-templates.ts   # 3-layer prompt architecture
+    evolution.ts          # Character evolution system
+    animations.ts         # Framer Motion variants
+    storage.ts            # Battle history persistence (localStorage)
+  types/
+    game.ts               # All game type definitions
+  context/
+    GameContext.tsx        # Global state provider
+```
 
 ---
 
-## Build Missions
+## 30-Second Demo
 
-The project is structured as 5 incremental missions (~45 min each):
+1. Auto-intro plays showing key features (click to skip)
+2. Enter player names, click "Start Game" or "Demo Mode"
+3. Create two characters with descriptions and worlds
+4. Battle starts -- commentary: *"Shadow Knight vs Storm Mage -- the battle begins!"*
+5. Attack -- banner slides in: *"A devastating strike cleaves through the defender's guard!"*
+6. Critical hit -- screen shakes, "CRITICAL!" overlay flashes
+7. Victory -- full battle report with stats, MVP highlight, victory classification
 
-| Mission | Focus | Status |
-|---------|-------|--------|
-| **01** | Foundation — Next.js, Tailwind, static UI skeleton | Complete |
-| **02** | Odyssey Integration — SDK, video streaming, lifecycle | Complete |
-| **03** | Game Logic — State machine, scoring, battle flow | Complete |
-| **04** | UI Polish — Framer Motion animations, glassmorphism | In Progress |
-| **05** | Demo Ready — Bug fixes, error handling, demo script | Pending |
+---
 
-Full specifications for each mission are in `docs/missions/`.
+## Design
+
+Dark-first design system. No emojis, no floating orbs, no gimmicks. Professional craft.
+
+- **Palette**: Zinc-based dark theme with amber (Player 1) and violet (Player 2) accents
+- **Typography**: Geist Sans / Geist Mono
+- **Animations**: Purposeful -- spring physics for feedback, no decorative motion
+- **Scrollbars**: Custom-styled to match the dark theme globally
+- **Icons**: Lucide React throughout (no emojis anywhere in the app)
 
 ---
 
@@ -393,4 +220,6 @@ MIT
 
 ---
 
-*Built for the [Odyssey ML Hackathon](https://developer.odyssey.ml) — showcasing Odyssey-2 Pro as a real-time AI game engine.*
+Built for the **Odyssey-2 Pro Inaugural Hackathon** -- February 2026, Menlo Park, CA.
+
+Judged by **Soleio** (Facebook's first designer), **Oliver Cameron** (Odyssey CEO), and the Odyssey team.

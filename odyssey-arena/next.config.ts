@@ -28,7 +28,7 @@ const nextConfig: NextConfig = {
               "style-src 'self' 'unsafe-inline'",
               "img-src 'self' data: https: blob:",
               "font-src 'self' data:",
-              "connect-src 'self' https://*.odyssey.stream https://*.odysseyml.com wss://*.odyssey.stream wss://*.odysseyml.com https://generativelanguage.googleapis.com https://*.vercel.app https://*.vercel-insights.com",
+              "connect-src 'self' https://*.odyssey.stream https://*.odysseyml.com https://api.odyssey.ml wss://*.odyssey.stream wss://*.odysseyml.com https://generativelanguage.googleapis.com https://*.vercel.app https://*.vercel-insights.com",
               "media-src 'self' blob:",
               "frame-src 'none'",
             ].join("; "),

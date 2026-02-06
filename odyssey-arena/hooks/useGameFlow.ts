@@ -19,7 +19,6 @@ import type { ArenaState, EvolutionLevel } from '@/types/game';
 /**
  * High-level game orchestration hook.
  * Combines game context + Odyssey connection into a single interface.
- * Supports "demo mode" — full game flow without live Odyssey video.
  * All Odyssey prompts flow through the prompt-templates system.
  *
  * Handles Odyssey connection resilience:
@@ -30,7 +29,6 @@ import type { ArenaState, EvolutionLevel } from '@/types/game';
 export function useGameFlow() {
   const { state, dispatch } = useGame();
   const odyssey = useOdysseyStream();
-  const [isDemoMode, setIsDemoMode] = useState(false);
   const battleStreamLockRef = useRef(false);
 
   // Evolution transformation state (consumed by page.tsx for the overlay)
@@ -46,7 +44,6 @@ export function useGameFlow() {
   // the battle-stream useEffect in page.tsx to re-fire and auto-reconnect.
   useEffect(() => {
     if (
-      !isDemoMode &&
       odyssey.status === 'disconnected' &&
       state.isConnected &&
       state.phase !== 'idle'
@@ -54,7 +51,7 @@ export function useGameFlow() {
       console.log('[GameFlow] Odyssey disconnected while game active — syncing state');
       dispatch({ type: 'DISCONNECT' });
     }
-  }, [odyssey.status, state.isConnected, state.phase, isDemoMode, dispatch]);
+  }, [odyssey.status, state.isConnected, state.phase, dispatch]);
 
   // ── Start Game (Idle → Setup) ──────────────────────────────────
   const startGame = useCallback(async () => {
@@ -70,26 +67,11 @@ export function useGameFlow() {
     }
   }, [state.phase, odyssey, dispatch]);
 
-  // ── Start Demo Mode (skip Odyssey, test full UI flow) ──────────
-  const startDemoMode = useCallback(() => {
-    if (state.phase !== 'idle') return;
-    setIsDemoMode(true);
-    dispatch({ type: 'CONNECT' });
-  }, [state.phase, dispatch]);
-
   // ── Submit Character Setup (supports optional image for image-to-video) ──
   const submitCharacter = useCallback(
     async (player: 1 | 2, character: string, world: string, image?: File | Blob) => {
       dispatch({ type: 'SET_CHARACTER', player, character, world });
       dispatch({ type: 'SET_PROCESSING', processing: true });
-
-      if (isDemoMode) {
-        // Demo mode: simulate a brief delay, then complete
-        await new Promise((r) => setTimeout(r, 1500));
-        dispatch({ type: 'COMPLETE_SETUP', player });
-        dispatch({ type: 'SET_PROCESSING', processing: false });
-        return;
-      }
 
       // Build prompt using template system (state descriptions, not action verbs)
       const prompt = buildCharacterPreviewPrompt(character, world);
@@ -117,7 +99,7 @@ export function useGameFlow() {
         dispatch({ type: 'SET_PROCESSING', processing: false });
       }
     },
-    [odyssey, dispatch, isDemoMode]
+    [odyssey, dispatch]
   );
 
   // ── Submit Battle Action ───────────────────────────────────────
@@ -146,26 +128,24 @@ export function useGameFlow() {
       const changes = await calculateStatChangesWithAI(sanitized, state);
       const event = createEventEntry(playerId, sanitized, changes);
 
-      // Send to Odyssey for visual feedback using prompt templates (skip in demo)
-      if (!isDemoMode) {
-        try {
-          const activePlayer = state.players[playerId - 1];
-          const opponent = state.players[playerId === 1 ? 1 : 0];
+      // Send to Odyssey for visual feedback using prompt templates
+      try {
+        const activePlayer = state.players[playerId - 1];
+        const opponent = state.players[playerId === 1 ? 1 : 0];
 
-          // Build action prompt using state descriptions (avoids looping)
-          const battlePrompt = buildActionPrompt(
-            activePlayer.character || activePlayer.name,
-            action,
-            opponent.character || opponent.name
-          );
-          await odyssey.interact(battlePrompt);
-        } catch {
-          // Odyssey interaction is best-effort; game continues regardless
-        }
+        // Build action prompt using state descriptions (avoids looping)
+        const battlePrompt = buildActionPrompt(
+          activePlayer.character || activePlayer.name,
+          action,
+          opponent.character || opponent.name
+        );
+        await odyssey.interact(battlePrompt);
+      } catch {
+        // Odyssey interaction is best-effort; game continues regardless
       }
 
-      // Brief delay for "resolving action..." feel (800ms in demo, 400ms with stream)
-      await new Promise((r) => setTimeout(r, isDemoMode ? 800 : 400));
+      // Brief delay for "resolving action..." feel
+      await new Promise((r) => setTimeout(r, 400));
 
       // Resolve the action in state
       dispatch({ type: 'RESOLVE_ACTION', event });
@@ -232,13 +212,12 @@ export function useGameFlow() {
         dispatch({ type: 'SWITCH_ACTIVE_PLAYER' });
       }
     },
-    [state, odyssey, dispatch, isDemoMode]
+    [state, odyssey, dispatch]
   );
 
   // ── Reset Game ─────────────────────────────────────────────────
   const resetGame = useCallback(() => {
     odyssey.disconnect();
-    setIsDemoMode(false);
     dispatch({ type: 'RESET_GAME' });
   }, [odyssey, dispatch]);
 
@@ -258,7 +237,7 @@ export function useGameFlow() {
   // Retries with exponential backoff if the first attempt fails.
   // Auto-dispatches CONNECT if the game state was out of sync.
   const startBattleStream = useCallback(async () => {
-    if (state.phase !== 'battle' || isDemoMode) return;
+    if (state.phase !== 'battle') return;
 
     // Prevent concurrent reconnection attempts (e.g. from rapid re-renders)
     if (battleStreamLockRef.current) {
@@ -313,15 +292,13 @@ export function useGameFlow() {
     battleStreamLockRef.current = false;
     // All attempts failed — game continues without stream (Odyssey is best-effort)
     console.warn('[GameFlow] Battle stream could not be started. Game continues without video.');
-  }, [state, odyssey, dispatch, isDemoMode]);
+  }, [state, odyssey, dispatch]);
 
   return {
     state,
     dispatch,
     odyssey,
-    isDemoMode,
     startGame,
-    startDemoMode,
     submitCharacter,
     submitAction,
     resetGame,
