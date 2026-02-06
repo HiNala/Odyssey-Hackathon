@@ -11,6 +11,22 @@ export interface PlayerStats {
   energy: number;    // Action resource pool
 }
 
+/** Status effect types */
+export type StatusEffectType = 'burning' | 'frozen' | 'powered' | 'weakened' | 'shielded';
+
+/** Active status effect on a player */
+export interface StatusEffect {
+  type: StatusEffectType;
+  duration: number;   // Turns remaining
+  power: number;      // Effect strength (varies by type)
+}
+
+/** Combo tracking per player */
+export interface ComboState {
+  lastActionType: string;  // 'offensive' | 'defensive' | 'special' | 'neutral'
+  count: number;           // Consecutive same-type actions
+}
+
 /** Individual player state */
 export interface PlayerState {
   id: 1 | 2;
@@ -19,6 +35,8 @@ export interface PlayerState {
   world: string;            // World description (user input)
   characterPrompt: string;  // Full prompt sent to Odyssey
   stats: PlayerStats;
+  statusEffects: StatusEffect[];
+  combo: ComboState;
   streamId: string | null;
   isStreaming: boolean;
   isSetupComplete: boolean;
@@ -39,6 +57,8 @@ export interface EventEntry {
     player2?: Partial<PlayerStats>;
   };
   impactType: ImpactType;
+  comboCount?: number;
+  statusApplied?: StatusEffectType;
 }
 
 /** Game phases */
@@ -52,6 +72,7 @@ export interface ArenaState {
   activePlayer: 1 | 2;
   setupPlayer: 1 | 2;       // Which player is currently setting up
   winner: 1 | 2 | null;
+  turnCount: number;         // Total turns played
   isConnected: boolean;
   connectionError: string | null;
   isProcessing: boolean;     // True while an action is being resolved

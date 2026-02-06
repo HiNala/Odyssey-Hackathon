@@ -5,7 +5,6 @@ import { ErrorBoundary } from "@/components/ErrorBoundary";
 import { validateEnv } from "@/lib/env";
 import "./globals.css";
 
-// Validate environment on server startup
 if (typeof window === "undefined") {
   validateEnv();
 }
@@ -28,8 +27,8 @@ export const metadata: Metadata = {
   description:
     "Live AI Battle Arena — Two players, AI-generated worlds, real-time battle. Powered by Odyssey-2 Pro World Model & Google Gemini.",
   icons: {
-    icon: "/favicon.svg",
-    apple: "/favicon.svg",
+    icon: "/icon.png",
+    apple: "/icon.png",
   },
   openGraph: {
     title: "Odyssey Arena",
@@ -53,12 +52,13 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en">
+    <html lang="en" className="dark">
       <head>
         <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no" />
+        <meta name="theme-color" content="#09090b" />
       </head>
       <body
-        className={`${geistSans.variable} ${geistMono.variable} antialiased`}
+        className={`${geistSans.variable} ${geistMono.variable} antialiased bg-background text-foreground`}
       >
         <ErrorBoundary>
           <GameProvider>{children}</GameProvider>

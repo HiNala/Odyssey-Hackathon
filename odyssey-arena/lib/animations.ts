@@ -1,18 +1,19 @@
 /**
  * Framer Motion Animation Variants
- * Intentional, subtle motion design. No bounce, no float, no glow.
+ * Refined, intentional motion. No bouncing orbs. No gratuitous movement.
+ * Every animation serves a purpose: entrance, feedback, or state change.
  */
 
 import type { Variants, Transition } from 'framer-motion';
 
 // ─── Timing & Easing ────────────────────────────────────────────────
 
-export const timing = { fast: 0.15, normal: 0.25, slow: 0.4 };
+export const timing = { fast: 0.15, normal: 0.25, slow: 0.4, verySlow: 0.6 };
 
 export const easing = {
-  smooth: [0.25, 0.1, 0.25, 1] as const,
-  decelerate: [0, 0, 0.2, 1] as const,
-  accelerate: [0.4, 0, 1, 1] as const,
+  smooth: [0.4, 0, 0.2, 1] as const,
+  out: [0, 0, 0.2, 1] as const,
+  sharp: [0.4, 0, 0.6, 1] as const,
 };
 
 export const defaultTransition: Transition = {
@@ -40,17 +41,17 @@ export const phoneVariants: Variants = {
   visible: {
     opacity: 1,
     x: 0,
-    transition: { duration: timing.slow, ease: easing.decelerate },
+    transition: { duration: timing.slow, ease: easing.out },
   },
 };
 
 export const activeGlowVariants: Variants = {
   active: {
-    boxShadow: '0 0 0 1px rgba(255, 255, 255, 0.08)',
+    opacity: 1,
     transition: { duration: 0.3 },
   },
   inactive: {
-    boxShadow: '0 0 0 0px rgba(255, 255, 255, 0)',
+    opacity: 1,
     transition: { duration: 0.3 },
   },
 };
@@ -58,11 +59,11 @@ export const activeGlowVariants: Variants = {
 // ─── Center HUD ─────────────────────────────────────────────────────
 
 export const hudVariants: Variants = {
-  hidden: { opacity: 0, y: 12 },
+  hidden: { opacity: 0, y: 16 },
   visible: {
     opacity: 1,
     y: 0,
-    transition: { duration: timing.slow, ease: easing.decelerate, staggerChildren: 0.08 },
+    transition: { duration: timing.slow, ease: easing.out, staggerChildren: 0.08 },
   },
 };
 
@@ -81,7 +82,7 @@ export const eventItemVariants: Variants = {
     opacity: 1,
     x: 0,
     height: 'auto',
-    transition: { duration: timing.normal, ease: easing.decelerate },
+    transition: { duration: timing.normal, ease: easing.out },
   },
   exit: { opacity: 0, x: 12, transition: { duration: timing.fast } },
 };
@@ -93,7 +94,7 @@ export const promptBarVariants: Variants = {
   visible: {
     y: 0,
     opacity: 1,
-    transition: { duration: timing.slow, ease: easing.decelerate, delay: 0.2 },
+    transition: { duration: timing.slow, ease: easing.out, delay: 0.2 },
   },
 };
 
@@ -109,12 +110,12 @@ export const victoryOverlayVariants: Variants = {
 };
 
 export const victoryContentVariants: Variants = {
-  hidden: { opacity: 0, scale: 0.96, y: 16 },
+  hidden: { opacity: 0, scale: 0.95, y: 20 },
   visible: {
     opacity: 1,
     scale: 1,
     y: 0,
-    transition: { duration: timing.slow, ease: easing.decelerate },
+    transition: { duration: timing.slow, ease: easing.out },
   },
 };
 
@@ -127,7 +128,7 @@ export const shakeVariants: Variants = {
     transition: { duration: 0.4 },
   },
   shakeHard: {
-    x: [0, -12, 12, -8, 8, -4, 4, 0],
+    x: [0, -12, 10, -8, 6, -3, 0],
     transition: { duration: 0.5 },
   },
 };
@@ -139,20 +140,15 @@ export const setupFormVariants: Variants = {
   visible: {
     opacity: 1,
     y: 0,
-    transition: { duration: timing.slow, ease: easing.decelerate },
+    transition: { duration: timing.slow, ease: easing.out },
   },
-  exit: { opacity: 0, y: -8, transition: { duration: 0.15 } },
+  exit: { opacity: 0, y: -12, transition: { duration: 0.2 } },
 };
 
-// ─── Fade generic ───────────────────────────────────────────────────
+// ─── Fade ───────────────────────────────────────────────────────────
 
 export const fadeVariants: Variants = {
   hidden: { opacity: 0 },
   visible: { opacity: 1, transition: { duration: timing.normal } },
   exit: { opacity: 0, transition: { duration: timing.fast } },
-};
-
-// ─── Phone float removed — no floating animations ───────────────────
-export const phoneFloatVariants: Variants = {
-  float: {},
 };
