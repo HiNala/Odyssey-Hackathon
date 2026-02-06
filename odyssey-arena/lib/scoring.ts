@@ -382,9 +382,9 @@ export function createEventEntry(
 
 /** Momentum color for UI */
 export function getMomentumColor(value: number): string {
-  if (value >= 80) return 'text-green-400';
-  if (value >= 60) return 'text-emerald-300';
-  if (value >= 40) return 'text-yellow-300';
-  if (value >= 20) return 'text-orange-400';
-  return 'text-red-500';
+  if (value >= 80) return 'text-green-600';
+  if (value >= 60) return 'text-emerald-600';
+  if (value >= 40) return 'text-yellow-600';
+  if (value >= 20) return 'text-orange-600';
+  return 'text-red-600';
 }

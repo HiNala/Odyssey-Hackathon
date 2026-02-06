@@ -5,13 +5,9 @@ import { cn } from '@/lib/utils';
 import type { ImpactType } from '@/types/game';
 
 interface DamagePopupProps {
-  /** The latest momentum change to display (positive = good, negative = bad) */
   value: number | null;
-  /** Which side of the screen to show it */
   side: 'left' | 'right';
-  /** Impact severity for styling */
   impact?: ImpactType;
-  /** Unique key to re-trigger animation on each new event */
   eventKey?: string;
 }
 
@@ -21,28 +17,28 @@ export function DamagePopup({ value, side, impact = 'normal', eventKey }: Damage
   const isPositive = value > 0;
 
   const colorClass = isPositive
-    ? 'text-emerald-400'
+    ? 'text-success'
     : impact === 'critical'
-      ? 'text-red-400'
+      ? 'text-danger'
       : impact === 'strong'
         ? 'text-orange-400'
         : 'text-red-300';
 
   const sizeClass =
-    impact === 'critical' ? 'text-5xl' :
-    impact === 'strong' ? 'text-4xl' :
-    'text-3xl';
+    impact === 'critical' ? 'text-4xl' :
+    impact === 'strong' ? 'text-3xl' :
+    'text-2xl';
 
   return (
     <AnimatePresence mode="wait">
       <motion.div
         key={eventKey || `${value}`}
-        initial={{ opacity: 1, y: 0, scale: 0.5 }}
-        animate={{ opacity: 0, y: -60, scale: 1.3 }}
+        initial={{ opacity: 1, y: 0, scale: 0.8 }}
+        animate={{ opacity: 0, y: -40, scale: 1.1 }}
         exit={{ opacity: 0 }}
-        transition={{ duration: 1.2, ease: 'easeOut' }}
+        transition={{ duration: 1, ease: 'easeOut' }}
         className={cn(
-          'absolute z-50 pointer-events-none font-bold drop-shadow-lg',
+          'absolute z-50 pointer-events-none font-bold font-mono tabular-nums',
           side === 'left' ? 'left-1/3' : 'right-1/3',
           'top-1/3',
           sizeClass,

@@ -1,26 +1,26 @@
+import { Loader2 } from 'lucide-react';
+
 export default function Loading() {
   return (
-    <div className="min-h-screen flex items-center justify-center bg-[#0a0a0f]">
-      <div className="glass rounded-3xl p-8 max-w-sm w-full space-y-4">
+    <div className="min-h-screen flex items-center justify-center bg-background">
+      <div className="panel-elevated rounded-2xl p-8 max-w-sm w-full space-y-5">
         {/* Logo placeholder */}
-        <div className="h-16 w-16 bg-white/10 rounded-xl mx-auto animate-pulse" />
-
-        {/* Title skeleton */}
-        <div className="space-y-2">
-          <div className="h-6 bg-white/10 rounded-lg w-3/4 mx-auto animate-pulse" />
-          <div className="h-3 bg-white/10 rounded w-1/2 mx-auto animate-pulse" />
-        </div>
+        <div className="h-10 w-32 bg-surface-elevated rounded-lg mx-auto" />
 
         {/* Content skeleton */}
-        <div className="space-y-3 pt-2">
-          <div className="h-10 bg-white/10 rounded-lg animate-pulse" />
-          <div className="h-10 bg-white/10 rounded-lg animate-pulse" />
-          <div className="h-10 bg-white/10 rounded-lg animate-pulse" />
+        <div className="space-y-3">
+          <div className="h-5 bg-surface-elevated rounded-md w-3/4 mx-auto" />
+          <div className="h-3 bg-surface-elevated rounded-md w-1/2 mx-auto" />
+        </div>
+
+        <div className="space-y-2.5 pt-1">
+          <div className="h-10 bg-surface-elevated rounded-lg" />
+          <div className="h-10 bg-surface-elevated rounded-lg" />
         </div>
 
         {/* Spinner */}
         <div className="flex justify-center pt-2">
-          <div className="w-6 h-6 border-2 border-white/20 border-t-white/60 rounded-full animate-spin" />
+          <Loader2 className="w-5 h-5 text-text-tertiary animate-spin" />
         </div>
       </div>
     </div>

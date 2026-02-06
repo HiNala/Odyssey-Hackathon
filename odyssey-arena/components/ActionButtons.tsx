@@ -2,28 +2,19 @@
 
 import { motion } from 'framer-motion';
 import { cn } from '@/lib/utils';
+import { Sword, Shield, Sparkles, Volume2 } from 'lucide-react';
 
 export type ActionType = 'attack' | 'defend' | 'special' | 'taunt';
 
 interface ActionConfig {
   type: ActionType;
   label: string;
-  /**
-   * Prompt sent to scoring engine for stat calculation.
-   * Uses action verbs which are fine for the text-based scoring system.
-   */
   prompt: string;
   description: string;
   energyCost: number;
+  icon: typeof Sword;
 }
 
-/**
- * Quick-action presets for battle.
- *
- * IMPORTANT: These prompts go to the scoring engine (text analysis + Gemini),
- * NOT directly to Odyssey. The `buildActionPrompt()` in prompt-templates.ts
- * converts them to state descriptions before sending to Odyssey's interact().
- */
 const ACTIONS: ActionConfig[] = [
   {
     type: 'attack',
@@ -31,6 +22,7 @@ const ACTIONS: ActionConfig[] = [
     prompt: 'strikes with a powerful devastating blow, landing a crushing hit',
     description: 'Deal damage',
     energyCost: 10,
+    icon: Sword,
   },
   {
     type: 'defend',
@@ -38,6 +30,7 @@ const ACTIONS: ActionConfig[] = [
     prompt: 'defends with a fortified shield stance, guard tightened and absorbing impact',
     description: 'Boost defense',
     energyCost: 7,
+    icon: Shield,
   },
   {
     type: 'special',
@@ -45,6 +38,7 @@ const ACTIONS: ActionConfig[] = [
     prompt: 'unleashes a devastating ultimate signature power with incredible cosmic force',
     description: 'High risk/reward',
     energyCost: 25,
+    icon: Sparkles,
   },
   {
     type: 'taunt',
@@ -52,6 +46,7 @@ const ACTIONS: ActionConfig[] = [
     prompt: 'taunts the opponent with an intimidating display of overwhelming dominance',
     description: 'Drain energy',
     energyCost: 5,
+    icon: Volume2,
   },
 ];
 
@@ -76,84 +71,46 @@ export function ActionButtons({
         {ACTIONS.map((action) => {
           const canAfford = energy >= action.energyCost;
           const isDisabled = disabled || !canAfford;
+          const Icon = action.icon;
 
           return (
             <motion.button
               key={action.type}
               whileHover={isDisabled ? {} : { scale: 1.02 }}
-              whileTap={isDisabled ? {} : { scale: 0.95 }}
+              whileTap={isDisabled ? {} : { scale: 0.97 }}
               onClick={() => onAction(action.prompt)}
               disabled={isDisabled}
               aria-label={`${action.label}: ${action.description} (${action.energyCost} energy)`}
               className={cn(
-                'flex-1 glass rounded-xl px-3 py-2.5 min-h-[72px] flex flex-col items-center gap-0.5 transition-all',
-                'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/50',
-                'disabled:opacity-30 disabled:cursor-not-allowed',
-                !isDisabled && (isP1
-                  ? 'hover:bg-player1-accent/15 hover:ring-1 hover:ring-player1-accent/30'
-                  : 'hover:bg-player2-accent/15 hover:ring-1 hover:ring-player2-accent/30'),
+                'flex-1 rounded-xl px-3 py-2.5 min-h-[68px]',
+                'flex flex-col items-center gap-1',
+                'border border-border bg-surface-raised',
+                'transition-all duration-200',
+                'disabled:opacity-25 disabled:cursor-not-allowed',
+                !isDisabled && isP1 && 'hover:border-player1-accent/30 hover:bg-player1-muted',
+                !isDisabled && !isP1 && 'hover:border-player2-accent/30 hover:bg-player2-muted',
               )}
             >
-              <ActionIcon type={action.type} accent={isP1 ? 'player1' : 'player2'} />
+              <Icon
+                className={cn(
+                  'w-4 h-4',
+                  isP1 ? 'text-player1-accent/70' : 'text-player2-accent/70'
+                )}
+                strokeWidth={1.5}
+              />
               <span
                 className={cn(
                   'text-[11px] font-semibold',
-                  isP1 ? 'text-player1-accent' : 'text-player2-accent'
+                  isP1 ? 'text-player1-accent/90' : 'text-player2-accent/90'
                 )}
               >
                 {action.label}
               </span>
-              <span className="text-[9px] text-white/40">{action.energyCost} NRG</span>
+              <span className="text-[9px] text-text-muted">{action.energyCost} NRG</span>
             </motion.button>
           );
         })}
       </div>
     </div>
-  );
-}
-
-function ActionIcon({
-  type,
-  accent,
-}: {
-  type: ActionType;
-  accent: 'player1' | 'player2';
-}) {
-  const color =
-    accent === 'player1' ? 'text-player1-accent/80' : 'text-player2-accent/80';
-
-  if (type === 'attack') {
-    return (
-      <svg className={cn('w-5 h-5', color)} viewBox="0 0 24 24" fill="none" stroke="currentColor">
-        <path strokeWidth={1.6} strokeLinecap="round" d="M4 20L20 4" />
-        <path strokeWidth={1.6} strokeLinecap="round" d="M8 4h4l8 8v4" />
-        <path strokeWidth={1.6} strokeLinecap="round" d="M4 16l4 4" />
-      </svg>
-    );
-  }
-
-  if (type === 'defend') {
-    return (
-      <svg className={cn('w-5 h-5', color)} viewBox="0 0 24 24" fill="none" stroke="currentColor">
-        <path strokeWidth={1.6} strokeLinecap="round" d="M12 3l7 3v6c0 5-3.5 7.5-7 9-3.5-1.5-7-4-7-9V6l7-3Z" />
-      </svg>
-    );
-  }
-
-  if (type === 'special') {
-    return (
-      <svg className={cn('w-5 h-5', color)} viewBox="0 0 24 24" fill="none" stroke="currentColor">
-        <path strokeWidth={1.6} strokeLinecap="round" d="M12 3l2.5 6.5L21 12l-6.5 2.5L12 21l-2.5-6.5L3 12l6.5-2.5L12 3Z" />
-      </svg>
-    );
-  }
-
-  return (
-    <svg className={cn('w-5 h-5', color)} viewBox="0 0 24 24" fill="none" stroke="currentColor">
-      <path strokeWidth={1.6} strokeLinecap="round" d="M5 12c2 2 4 3 7 3s5-1 7-3" />
-      <path strokeWidth={1.6} strokeLinecap="round" d="M8 9c.5-1 1.5-1.5 2.5-1.5S12.5 8 13 9" />
-      <path strokeWidth={1.6} strokeLinecap="round" d="M6 7l2-2" />
-      <path strokeWidth={1.6} strokeLinecap="round" d="M18 7l-2-2" />
-    </svg>
   );
 }

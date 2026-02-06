@@ -3,6 +3,7 @@
 import { memo, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { cn } from '@/lib/utils';
+import { Video, Wifi, AlertTriangle, Swords, Loader2 } from 'lucide-react';
 import type { ConnectionStatus } from '@/lib/types';
 
 interface OdysseyStreamProps {
@@ -15,9 +16,8 @@ interface OdysseyStreamProps {
 }
 
 /**
- * Video component that displays the Odyssey stream.
- * Shows status-aware overlays for connection states.
- * Uses required attributes for proper playback: autoPlay, playsInline, muted
+ * OdysseyStream — Video display for live AI stream.
+ * Clean status indicators using lucide icons. No emojis.
  */
 export const OdysseyStream = memo(function OdysseyStream({
   mediaStream,
@@ -25,7 +25,6 @@ export const OdysseyStream = memo(function OdysseyStream({
   className = '',
   isActive = false,
   demoMode = false,
-  playerName,
 }: OdysseyStreamProps) {
   const videoRef = useRef<HTMLVideoElement>(null);
 
@@ -33,14 +32,10 @@ export const OdysseyStream = memo(function OdysseyStream({
     const video = videoRef.current;
     if (video && mediaStream) {
       video.srcObject = mediaStream;
-
-      // Ensure video plays when stream is assigned
       video.play().catch((err) => {
         console.warn('Video autoplay was prevented:', err);
       });
     }
-
-    // Cleanup: remove stream when component unmounts or stream changes
     return () => {
       if (video) {
         video.srcObject = null;
@@ -53,12 +48,12 @@ export const OdysseyStream = memo(function OdysseyStream({
   return (
     <div
       className={cn(
-        'relative w-full h-full overflow-hidden rounded-2xl',
+        'relative w-full h-full overflow-hidden rounded-xl',
         'bg-black/40',
         className
       )}
     >
-      {/* Video Element — always in DOM for smooth transitions */}
+      {/* Video element */}
       <video
         ref={videoRef}
         autoPlay
@@ -71,7 +66,7 @@ export const OdysseyStream = memo(function OdysseyStream({
         )}
       />
 
-      {/* Status Overlays */}
+      {/* Status overlays */}
       <AnimatePresence>
         {!isShowingVideo && (
           <motion.div
@@ -81,85 +76,60 @@ export const OdysseyStream = memo(function OdysseyStream({
             transition={{ duration: 0.3 }}
             className="absolute inset-0 flex flex-col items-center justify-center gap-3"
           >
-            {/* Demo Mode — stylish placeholder instead of connection status */}
+            {/* Demo mode */}
             {demoMode && (
               <div className="text-center space-y-3">
-                <div className="text-5xl opacity-30 animate-float select-none">
-                  {playerName?.toLowerCase().includes('samurai') || playerName?.toLowerCase().includes('knight') ? '\u2694\uFE0F' :
-                   playerName?.toLowerCase().includes('assassin') || playerName?.toLowerCase().includes('shadow') ? '\uD83D\uDDE1\uFE0F' :
-                   playerName?.toLowerCase().includes('dragon') || playerName?.toLowerCase().includes('mage') ? '\uD83D\uDD2E' :
-                   playerName?.toLowerCase().includes('valkyrie') || playerName?.toLowerCase().includes('guardian') ? '\uD83D\uDEE1\uFE0F' :
-                   playerName?.toLowerCase().includes('titan') || playerName?.toLowerCase().includes('volcanic') ? '\uD83C\uDF0B' :
-                   playerName?.toLowerCase().includes('hacker') || playerName?.toLowerCase().includes('cyber') ? '\uD83D\uDCBB' : '\uD83C\uDFAD'}
+                <div className="w-12 h-12 rounded-xl bg-white/[0.04] border border-white/[0.06] flex items-center justify-center mx-auto">
+                  <Swords className="w-5 h-5 text-white/30" />
                 </div>
-                <div className="text-white/30 text-xs font-medium">Demo Mode</div>
+                <span className="text-[11px] text-text-muted font-medium tracking-wide uppercase">Demo Mode</span>
               </div>
             )}
 
-            {/* Disconnected / Idle (non-demo) */}
+            {/* Disconnected / idle */}
             {!demoMode && (status === 'disconnected' || (!isActive && !mediaStream)) && (
-              <div className="text-center space-y-2">
-                <div className="w-12 h-12 rounded-full bg-white/10 flex items-center justify-center mx-auto">
-                  <svg
-                    className="w-6 h-6 text-white/40"
-                    fill="none"
-                    viewBox="0 0 24 24"
-                    stroke="currentColor"
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={1.5}
-                      d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z"
-                    />
-                  </svg>
+              <div className="text-center space-y-3">
+                <div className="w-12 h-12 rounded-xl bg-white/[0.04] border border-white/[0.06] flex items-center justify-center mx-auto">
+                  <Video className="w-5 h-5 text-white/25" />
                 </div>
-                <span className="text-white/40 text-xs">Awaiting stream...</span>
+                <span className="text-[11px] text-text-muted">Awaiting stream</span>
               </div>
             )}
 
-            {/* Connecting / Authenticating */}
+            {/* Connecting */}
             {!demoMode && (status === 'connecting' || status === 'authenticating' || status === 'reconnecting') && (
               <div className="text-center space-y-3">
-                <div className="w-10 h-10 border-3 border-white/20 border-t-white/70 rounded-full animate-spin mx-auto" />
+                <div className="w-12 h-12 rounded-xl bg-white/[0.04] border border-white/[0.06] flex items-center justify-center mx-auto">
+                  <Loader2 className="w-5 h-5 text-white/40 animate-spin" />
+                </div>
                 <StatusBadge
                   text={
                     status === 'authenticating'
-                      ? 'Authenticating...'
+                      ? 'Authenticating'
                       : status === 'reconnecting'
-                        ? 'Reconnecting...'
-                        : 'Connecting...'
+                        ? 'Reconnecting'
+                        : 'Connecting'
                   }
                   color="blue"
                 />
               </div>
             )}
 
-            {/* Connected but not streaming yet */}
+            {/* Connected, starting stream */}
             {!demoMode && status === 'connected' && isActive && !mediaStream && (
               <div className="text-center space-y-3">
-                <div className="w-10 h-10 border-3 border-white/20 border-t-emerald-400 rounded-full animate-spin mx-auto" />
-                <StatusBadge text="Starting stream..." color="emerald" />
+                <div className="w-12 h-12 rounded-xl bg-white/[0.04] border border-white/[0.06] flex items-center justify-center mx-auto">
+                  <Wifi className="w-5 h-5 text-success/60 animate-pulse-subtle" />
+                </div>
+                <StatusBadge text="Starting stream" color="emerald" />
               </div>
             )}
 
-            {/* Error State (non-demo) */}
+            {/* Error */}
             {!demoMode && (status === 'error' || status === 'failed') && (
-              <div className="text-center space-y-2">
-                <div className="w-12 h-12 rounded-full bg-red-500/20 flex items-center justify-center mx-auto">
-                  <svg
-                    className="w-6 h-6 text-red-400"
-                    fill="none"
-                    viewBox="0 0 24 24"
-                    stroke="currentColor"
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={2}
-                      d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4.5c-.77-.833-2.694-.833-3.464 0L3.34 16.5c-.77.833.192 2.5 1.732 2.5z"
-                    />
-                  </svg>
+              <div className="text-center space-y-3">
+                <div className="w-12 h-12 rounded-xl bg-danger/10 border border-danger/20 flex items-center justify-center mx-auto">
+                  <AlertTriangle className="w-5 h-5 text-danger/70" />
                 </div>
                 <StatusBadge
                   text={status === 'failed' ? 'Connection Failed' : 'Error'}
@@ -171,18 +141,18 @@ export const OdysseyStream = memo(function OdysseyStream({
         )}
       </AnimatePresence>
 
-      {/* Live badge when streaming */}
+      {/* Live indicator */}
       <AnimatePresence>
         {isShowingVideo && status === 'streaming' && (
           <motion.div
-            initial={{ opacity: 0, y: -10 }}
+            initial={{ opacity: 0, y: -8 }}
             animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -10 }}
+            exit={{ opacity: 0, y: -8 }}
             className="absolute top-3 right-3"
           >
-            <div className="flex items-center gap-1.5 px-2 py-1 rounded-full bg-black/50 backdrop-blur-sm">
-              <div className="w-2 h-2 rounded-full bg-red-500 animate-pulse" />
-              <span className="text-[10px] text-white/80 font-medium">LIVE</span>
+            <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-black/60 backdrop-blur-sm border border-white/[0.06]">
+              <div className="w-1.5 h-1.5 rounded-full bg-danger animate-pulse-subtle" />
+              <span className="text-[10px] text-white/70 font-medium tracking-wider uppercase">Live</span>
             </div>
           </motion.div>
         )}
@@ -191,21 +161,15 @@ export const OdysseyStream = memo(function OdysseyStream({
   );
 });
 
-/** Small status badge component */
 function StatusBadge({ text, color }: { text: string; color: 'blue' | 'emerald' | 'red' }) {
   const colors = {
-    blue: 'bg-blue-500/20 text-blue-300 border-blue-500/30',
-    emerald: 'bg-emerald-500/20 text-emerald-300 border-emerald-500/30',
-    red: 'bg-red-500/20 text-red-300 border-red-500/30',
+    blue: 'text-info/70',
+    emerald: 'text-success/70',
+    red: 'text-danger/70',
   };
 
   return (
-    <span
-      className={cn(
-        'inline-block px-3 py-1 rounded-full text-[10px] font-medium border',
-        colors[color]
-      )}
-    >
+    <span className={cn('text-[10px] font-medium tracking-wide', colors[color])}>
       {text}
     </span>
   );

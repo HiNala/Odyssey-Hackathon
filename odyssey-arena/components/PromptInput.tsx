@@ -5,6 +5,7 @@ import { motion } from 'framer-motion';
 import { cn } from '@/lib/utils';
 import { promptBarVariants } from '@/lib/animations';
 import { sanitizeInput } from '@/lib/sanitize';
+import { ArrowRight } from 'lucide-react';
 
 interface PromptInputProps {
   onSubmit: (prompt: string) => void;
@@ -20,6 +21,7 @@ export function PromptInput({
   placeholder = 'Describe your action...',
 }: PromptInputProps) {
   const [prompt, setPrompt] = useState('');
+  const isP1 = activePlayer === 1;
 
   const handleSubmit = () => {
     const sanitized = sanitizeInput(prompt);
@@ -27,11 +29,6 @@ export function PromptInput({
     onSubmit(sanitized);
     setPrompt('');
   };
-
-  const accentClass =
-    activePlayer === 1
-      ? 'ring-player1-accent/40 focus-within:ring-player1-accent/60'
-      : 'ring-player2-accent/40 focus-within:ring-player2-accent/60';
 
   return (
     <motion.div
@@ -42,17 +39,19 @@ export function PromptInput({
     >
       <div
         className={cn(
-          'glass rounded-full p-2 flex items-center gap-2 ring-1 transition-all',
-          accentClass,
-          disabled && 'opacity-50',
+          'rounded-2xl p-1.5 flex items-center gap-2',
+          'border border-border bg-surface transition-all duration-200',
+          'focus-within:border-white/10',
+          disabled && 'opacity-40',
         )}
       >
+        {/* Player indicator */}
         <div
           className={cn(
-            'flex-shrink-0 w-10 h-10 rounded-full flex items-center justify-center text-xs font-bold',
-            activePlayer === 1
-              ? 'bg-player1-accent/20 text-player1-accent'
-              : 'bg-player2-accent/20 text-player2-accent',
+            'flex-shrink-0 w-9 h-9 rounded-xl flex items-center justify-center text-[10px] font-bold tracking-wider',
+            isP1
+              ? 'bg-player1-muted text-player1-accent border border-player1-accent/20'
+              : 'bg-player2-muted text-player2-accent border border-player2-accent/20',
           )}
         >
           P{activePlayer}
@@ -69,7 +68,7 @@ export function PromptInput({
           maxLength={500}
           disabled={disabled}
           aria-label="Enter battle action"
-          className="flex-1 bg-transparent border-none outline-none text-white placeholder:text-white/30 text-sm px-2 disabled:cursor-not-allowed"
+          className="flex-1 bg-transparent border-none outline-none text-white/90 placeholder:text-text-muted text-sm px-2 disabled:cursor-not-allowed"
         />
 
         <motion.button
@@ -78,17 +77,15 @@ export function PromptInput({
           onClick={handleSubmit}
           disabled={disabled || !prompt.trim()}
           className={cn(
-            'flex-shrink-0 w-10 h-10 rounded-full flex items-center justify-center transition-all',
-            'disabled:opacity-30 disabled:cursor-not-allowed',
-            activePlayer === 1
+            'flex-shrink-0 w-9 h-9 rounded-xl flex items-center justify-center transition-all duration-200',
+            'disabled:opacity-20 disabled:cursor-not-allowed',
+            isP1
               ? 'bg-player1-accent text-black hover:bg-player1-accent/80'
               : 'bg-player2-accent text-white hover:bg-player2-accent/80',
           )}
           aria-label="Submit action"
         >
-          <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M13 7l5 5m0 0l-5 5m5-5H6" />
-          </svg>
+          <ArrowRight className="w-4 h-4" strokeWidth={2.5} />
         </motion.button>
       </div>
     </motion.div>

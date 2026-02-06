@@ -2,7 +2,7 @@
 
 import { motion } from 'framer-motion';
 import { cn } from '@/lib/utils';
-import { phoneVariants, activeGlowVariants } from '@/lib/animations';
+import { phoneVariants } from '@/lib/animations';
 import type { ReactNode } from 'react';
 
 interface PhoneFrameProps {
@@ -22,8 +22,7 @@ export function PhoneFrame({
   isActive = false,
   playerName,
 }: PhoneFrameProps) {
-  const accentBorder =
-    side === 'left' ? 'border-player1-accent/30' : 'border-player2-accent/30';
+  const isP1 = side === 'left';
 
   return (
     <motion.div
@@ -32,38 +31,47 @@ export function PhoneFrame({
       initial="hidden"
       animate="visible"
     >
-      <motion.div
-        variants={activeGlowVariants}
-        animate={isActive ? 'active' : 'inactive'}
+      <div
         className={cn(
-          'glass glass-inset rounded-3xl p-3 lg:p-4',
-          'w-full max-w-sm',
-          'flex flex-col gap-2',
-          accentBorder,
+          'rounded-2xl p-[1px] w-full max-w-sm transition-all duration-500',
+          isActive
+            ? isP1
+              ? 'bg-gradient-to-b from-player1-accent/30 via-player1-accent/10 to-transparent'
+              : 'bg-gradient-to-b from-player2-accent/30 via-player2-accent/10 to-transparent'
+            : 'bg-gradient-to-b from-white/[0.08] to-transparent',
           className
         )}
         style={{ height: 'clamp(350px, 60vh, 600px)' }}
       >
-        {/* Notch */}
-        <div className="w-20 h-1 bg-white/30 rounded-full mx-auto" />
-
-        {/* Label / Player Name */}
-        {(label || playerName) && (
-          <div
-            className={cn(
-              'text-center text-xs font-medium',
-              side === 'left'
-                ? 'text-player1-accent/80'
-                : 'text-player2-accent/80'
-            )}
-          >
-            {playerName || label}
+        <div className="h-full rounded-[calc(0.75rem-1px)] bg-surface flex flex-col gap-2 p-3 lg:p-4">
+          {/* Notch — subtle indicator bar */}
+          <div className="flex justify-center">
+            <div
+              className={cn(
+                'w-16 h-[3px] rounded-full transition-colors duration-500',
+                isActive
+                  ? isP1 ? 'bg-player1-accent/40' : 'bg-player2-accent/40'
+                  : 'bg-white/10'
+              )}
+            />
           </div>
-        )}
 
-        {/* Content */}
-        <div className="flex-1 overflow-hidden rounded-2xl">{children}</div>
-      </motion.div>
+          {/* Player label */}
+          {(label || playerName) && (
+            <div
+              className={cn(
+                'text-center text-xs font-medium tracking-wide',
+                isP1 ? 'text-player1-accent/70' : 'text-player2-accent/70'
+              )}
+            >
+              {playerName || label}
+            </div>
+          )}
+
+          {/* Stream content */}
+          <div className="flex-1 overflow-hidden rounded-xl bg-black/40">{children}</div>
+        </div>
+      </div>
     </motion.div>
   );
 }

@@ -1,16 +1,22 @@
-<svg width="128" height="128" viewBox="0 0 128 128" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
-  <path
-    d="M64 10L70 40L96 32L78 52L108 64L78 76L96 96L70 88L64 118L58 88L32 96L50 76L20 64L50 52L32 32L58 40L64 10Z"
-    fill="url(#odyssey-gradient)"
-  />
-  <path
-    d="M64 26L68 48L84 44L72 56L92 64L72 72L84 84L68 80L64 102L60 80L44 84L56 72L36 64L56 56L44 44L60 48L64 26Z"
-    fill="rgba(255,255,255,0.35)"
-  />
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 320 48" fill="none">
+  <!-- Odyssey Arena wordmark - clean typographic logo -->
   <defs>
-    <linearGradient id="odyssey-gradient" x1="16" y1="16" x2="112" y2="112" gradientUnits="userSpaceOnUse">
-      <stop stop-color="#F59E0B"/>
-      <stop offset="1" stop-color="#8B5CF6"/>
+    <linearGradient id="mark-gradient" x1="0" y1="0" x2="48" y2="48" gradientUnits="userSpaceOnUse">
+      <stop offset="0%" stop-color="#F59E0B"/>
+      <stop offset="100%" stop-color="#8B5CF6"/>
+    </linearGradient>
+    <linearGradient id="text-gradient" x1="0" y1="0" x2="320" y2="0" gradientUnits="userSpaceOnUse">
+      <stop offset="0%" stop-color="#FAFAFA"/>
+      <stop offset="100%" stop-color="#A1A1AA"/>
     </linearGradient>
   </defs>
+  <!-- Shield emblem -->
+  <path d="M24 4L40 12V24C40 33.5 33 39 24 44C15 39 8 33.5 8 24V12L24 4Z" stroke="url(#mark-gradient)" stroke-width="2" fill="none"/>
+  <path d="M24 10L34 16V24C34 30.5 30 35 24 39C18 35 14 30.5 14 24V16L24 10Z" stroke="url(#mark-gradient)" stroke-width="1.2" fill="none" opacity="0.4"/>
+  <!-- Center diamond -->
+  <path d="M24 18L28 24L24 30L20 24Z" fill="url(#mark-gradient)" opacity="0.8"/>
+  <!-- ODYSSEY text -->
+  <text x="56" y="22" font-family="system-ui, -apple-system, 'Segoe UI', sans-serif" font-size="18" font-weight="700" letter-spacing="3" fill="url(#text-gradient)">ODYSSEY</text>
+  <!-- ARENA text -->
+  <text x="56" y="40" font-family="system-ui, -apple-system, 'Segoe UI', sans-serif" font-size="11" font-weight="500" letter-spacing="6" fill="#71717A">ARENA</text>
 </svg>
