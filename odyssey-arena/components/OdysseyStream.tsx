@@ -41,7 +41,7 @@ export const OdysseyStream = memo(function OdysseyStream({
     };
   }, [mediaStream]);
 
-  const isShowingVideo = mediaStream && (status === 'streaming' || status === 'connected');
+  const isShowingVideo = Boolean(mediaStream);
 
   return (
     <div

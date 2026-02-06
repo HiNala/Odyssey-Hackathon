@@ -1,5 +1,8 @@
 # ODYSSEY ARENA -- Hackathon Submission
 
+**Live Demo:** https://odyssey-hackathon.vercel.app  
+**GitHub:** https://github.com/HiNala/Odyssey-Hackathon
+
 ## One-Sentence Pitch
 
 Odyssey Arena is the first game with live AI commentary -- where Odyssey-2 Pro generates real-time battle visuals and Google Gemini provides ESPN-style play-by-play narrating every single action.
