@@ -91,18 +91,20 @@ export function useGameFlow() {
             : await odyssey.startStream(prompt);
           dispatch({ type: 'START_STREAM', player, streamId });
 
-          // Let it run briefly to establish the scene
-          await new Promise((r) => setTimeout(r, 4000));
+          // Let it run long enough for player to see their character generated
+          await new Promise((r) => setTimeout(r, 8000));
 
           await odyssey.endStream();
           dispatch({ type: 'END_STREAM', player });
         } catch (err) {
           console.error('Setup stream failed:', err);
+          // Brief pause so the UI doesn't flash
+          await new Promise((r) => setTimeout(r, 2000));
         }
       } else {
-        // Odyssey not connected yet — wait briefly then continue setup
+        // Odyssey not connected yet — wait then continue setup
         console.warn('[GameFlow] Odyssey not ready during setup — skipping preview stream');
-        await new Promise((r) => setTimeout(r, 1000));
+        await new Promise((r) => setTimeout(r, 2000));
       }
 
       dispatch({ type: 'COMPLETE_SETUP', player });
