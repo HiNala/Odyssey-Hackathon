@@ -171,7 +171,12 @@ export function gameReducer(
       };
 
     case 'CONNECTION_ERROR':
-      return { ...state, isConnected: false, connectionError: action.error };
+      return {
+        ...state,
+        isConnected: false,
+        connectionError: action.error,
+        phase: state.phase === 'idle' ? 'setup' : state.phase,
+      };
 
     case 'SET_PLAYER_NAME':
       return {
