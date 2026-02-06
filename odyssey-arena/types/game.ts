@@ -64,6 +64,14 @@ export interface EventEntry {
 /** Game phases */
 export type GamePhase = 'idle' | 'setup' | 'battle' | 'victory';
 
+/** Battle statistics tracked for the victory screen */
+export interface BattleStats {
+  totalDamageDealt: { player1: number; player2: number };
+  criticalHits: { player1: number; player2: number };
+  maxCombo: { player1: number; player2: number };
+  statusEffectsApplied: number;
+}
+
 /** Global arena state */
 export interface ArenaState {
   phase: GamePhase;
@@ -73,6 +81,7 @@ export interface ArenaState {
   setupPlayer: 1 | 2;       // Which player is currently setting up
   winner: 1 | 2 | null;
   turnCount: number;         // Total turns played
+  battleStats: BattleStats;  // Tracked for victory screen
   isConnected: boolean;
   connectionError: string | null;
   isProcessing: boolean;     // True while an action is being resolved
@@ -93,4 +102,5 @@ export type GameAction =
   | { type: 'RESOLVE_ACTION'; event: EventEntry }
   | { type: 'SWITCH_ACTIVE_PLAYER' }
   | { type: 'DECLARE_WINNER'; winner: 1 | 2 }
+  | { type: 'REMATCH' }
   | { type: 'RESET_GAME' };

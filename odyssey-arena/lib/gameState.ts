@@ -34,6 +34,15 @@ export function createPlayerState(id: 1 | 2): PlayerState {
   };
 }
 
+export function createInitialBattleStats() {
+  return {
+    totalDamageDealt: { player1: 0, player2: 0 },
+    criticalHits: { player1: 0, player2: 0 },
+    maxCombo: { player1: 0, player2: 0 },
+    statusEffectsApplied: 0,
+  };
+}
+
 export function createInitialState(): ArenaState {
   return {
     phase: 'idle',
@@ -43,6 +52,7 @@ export function createInitialState(): ArenaState {
     setupPlayer: 1,
     winner: null,
     turnCount: 0,
+    battleStats: createInitialBattleStats(),
     isConnected: false,
     connectionError: null,
     isProcessing: false,
@@ -99,7 +109,8 @@ function tickStatusEffects(effects: StatusEffect[]): StatusEffect[] {
 
 /** Apply start-of-turn status effects to a player's stats */
 function applyStatusEffectsTick(player: PlayerState): PlayerState {
-  let { momentum, power, defense, energy } = player.stats;
+  let { momentum, power, energy } = player.stats;
+  const { defense } = player.stats;
 
   for (const effect of player.statusEffects) {
     switch (effect.type) {
@@ -247,11 +258,27 @@ export function gameReducer(
         },
       }));
 
+      // Track battle stats
+      const evt = action.event;
+      const pKey = evt.player === 1 ? 'player1' : 'player2';
+      const opKey = evt.player === 1 ? 'player2' : 'player1';
+      const momentumLoss = Math.abs(Math.min(0, evt.statChanges[opKey]?.momentum ?? 0));
+      const comboCount = evt.comboCount ?? 0;
+      const newStats = { ...state.battleStats };
+      newStats.totalDamageDealt = { ...newStats.totalDamageDealt };
+      newStats.criticalHits = { ...newStats.criticalHits };
+      newStats.maxCombo = { ...newStats.maxCombo };
+      newStats.totalDamageDealt[pKey] += momentumLoss;
+      if (evt.impactType === 'critical') newStats.criticalHits[pKey] += 1;
+      if (comboCount > newStats.maxCombo[pKey]) newStats.maxCombo[pKey] = comboCount;
+      if (evt.statusApplied) newStats.statusEffectsApplied += 1;
+
       return {
         ...state,
         eventLog: [...state.eventLog, action.event],
         players: comboPlayers,
         turnCount: state.turnCount + 1,
+        battleStats: newStats,
         isProcessing: false,
       };
     }
@@ -259,9 +286,17 @@ export function gameReducer(
     case 'SWITCH_ACTIVE_PLAYER': {
       const nextPlayer = state.activePlayer === 1 ? 2 : 1;
       // Apply start-of-turn status effects to the next active player
-      const tickedPlayers = updatePlayer(state.players, nextPlayer as 1 | 2, (p) =>
+      let tickedPlayers = updatePlayer(state.players, nextPlayer as 1 | 2, (p) =>
         applyStatusEffectsTick(p)
       );
+      // Passive energy regeneration: +3 energy per turn (prevents stalemates)
+      tickedPlayers = tickedPlayers.map((p) => ({
+        ...p,
+        stats: {
+          ...p.stats,
+          energy: clamp(p.stats.energy + 3, 0, 100),
+        },
+      })) as [PlayerState, PlayerState];
       return {
         ...state,
         players: tickedPlayers,
@@ -271,6 +306,25 @@ export function gameReducer(
 
     case 'DECLARE_WINNER':
       return { ...state, phase: 'victory', winner: action.winner };
+
+    case 'REMATCH': {
+      // Keep characters and worlds, reset everything else for instant rematch
+      const rematchPlayers: [PlayerState, PlayerState] = [
+        { ...state.players[0], stats: createDefaultStats(), statusEffects: [], combo: { lastActionType: '', count: 0 } },
+        { ...state.players[1], stats: createDefaultStats(), statusEffects: [], combo: { lastActionType: '', count: 0 } },
+      ];
+      return {
+        ...state,
+        phase: 'battle' as const,
+        players: rematchPlayers,
+        eventLog: [],
+        activePlayer: 1 as const,
+        winner: null,
+        turnCount: 0,
+        battleStats: createInitialBattleStats(),
+        isProcessing: false,
+      };
+    }
 
     case 'RESET_GAME':
       return createInitialState();
@@ -301,10 +355,17 @@ export function canPlayerAct(state: ArenaState): boolean {
 
 export function checkVictoryCondition(state: ArenaState): 1 | 2 | null {
   const [p1, p2] = state.players;
+  // Primary victory: momentum reaches 100 or drops to 0
   if (p1.stats.momentum >= 100) return 1;
   if (p2.stats.momentum >= 100) return 2;
   if (p1.stats.momentum <= 0) return 2;
   if (p2.stats.momentum <= 0) return 1;
+
+  // Stalemate detection: after 30 turns, the player with higher momentum wins
+  if (state.turnCount >= 30) {
+    return p1.stats.momentum >= p2.stats.momentum ? 1 : 2;
+  }
+
   return null;
 }
 

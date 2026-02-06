@@ -62,41 +62,42 @@ export async function POST(request: NextRequest) {
     const activePlayer = context.players[context.activePlayer - 1];
     const opponent = context.players[context.activePlayer === 1 ? 1 : 0];
 
-    const prompt = `You are a dramatic battle narrator for an AI-powered arena game.
+    const isP1Active = context.activePlayer === 1;
+
+    const prompt = `You are a dramatic battle narrator for an AI arena game. Be concise and vivid. No emojis.
 
 CONTEXT:
-- Active Player: ${activePlayer.character || activePlayer.name} (${activePlayer.name})
-  Stats: Momentum ${activePlayer.stats.momentum}, Power ${activePlayer.stats.power}, Defense ${activePlayer.stats.defense}, Energy ${activePlayer.stats.energy}
-  
-- Opponent: ${opponent.character || opponent.name} (${opponent.name})
-  Stats: Momentum ${opponent.stats.momentum}, Power ${opponent.stats.power}, Defense ${opponent.stats.defense}, Energy ${opponent.stats.energy}
+- Attacker: ${activePlayer.character || activePlayer.name} (${activePlayer.name})
+  Momentum ${activePlayer.stats.momentum}/100, Power ${activePlayer.stats.power}, Defense ${activePlayer.stats.defense}, Energy ${activePlayer.stats.energy}/100
+
+- Defender: ${opponent.character || opponent.name} (${opponent.name})
+  Momentum ${opponent.stats.momentum}/100, Power ${opponent.stats.power}, Defense ${opponent.stats.defense}, Energy ${opponent.stats.energy}/100
 
 ACTION: "${action}"
 
-TASK:
-1. Analyze the action and determine:
-   - Type: offensive, defensive, special, or neutral
-   - Intensity: weak, normal, strong, or devastating
-   - Impact: miss, weak, normal, strong, or critical
+RULES FOR STAT CHANGES (you MUST follow these ranges):
+- Momentum changes: attacker gains +3 to +18, defender loses -2 to -12 (offensive)
+- Defensive actions: attacker gains +1 to +5 momentum, gains +3 to +8 defense, recovers +2 to +6 energy
+- Special moves: attacker gains +8 to +22 momentum, costs -15 to -30 energy
+- Energy cost for attacks: -5 to -15
+- A "miss" means near-zero changes
+- NEVER change momentum by more than 25 in a single action
+- NEVER change energy by more than 30 in a single action
+- Consider current stats: if attacker has low energy, the action should be weaker
 
-2. Generate a dramatic 1-2 sentence narration describing what happens.
+Player 1 is the attacker: ${isP1Active ? 'YES' : 'NO'}
 
-3. Calculate stat changes based on the action intensity:
-   - Strong actions: high momentum gain for attacker, high loss for defender
-   - Defensive actions: momentum shifts more balanced, defense boost
-   - Energy cost scales with intensity
-
-Respond in this EXACT JSON format (no markdown):
+RESPOND IN THIS EXACT JSON (no markdown, no code blocks):
 {
-  "narrative": "Your dramatic narration here",
+  "narrative": "1-2 vivid sentences describing the action result",
   "analysis": {
-    "type": "offensive",
-    "intensity": "strong",
-    "impactType": "strong"
+    "type": "offensive|defensive|special|neutral",
+    "intensity": "weak|normal|strong|devastating",
+    "impactType": "miss|weak|normal|strong|critical"
   },
   "statChanges": {
-    "player1": { "momentum": 0, "energy": 0 },
-    "player2": { "momentum": 0, "energy": 0 }
+    "player1": { "momentum": 0, "power": 0, "defense": 0, "energy": 0 },
+    "player2": { "momentum": 0, "power": 0, "defense": 0, "energy": 0 }
   }
 }`;
 

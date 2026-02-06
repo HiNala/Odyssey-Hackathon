@@ -1,11 +1,6 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
-  /* Turbopack root set via __dirname to silence lockfile warning */
-  turbopack: {
-    root: __dirname,
-  },
-
   // Production optimizations
   reactStrictMode: true,
   productionBrowserSourceMaps: false,
@@ -33,7 +28,7 @@ const nextConfig: NextConfig = {
               "style-src 'self' 'unsafe-inline'",
               "img-src 'self' data: https: blob:",
               "font-src 'self' data:",
-              "connect-src 'self' https://*.odyssey.stream https://*.odysseyml.com wss://*.odyssey.stream https://generativelanguage.googleapis.com",
+              "connect-src 'self' https://*.odyssey.stream https://*.odysseyml.com wss://*.odyssey.stream wss://*.odysseyml.com https://generativelanguage.googleapis.com https://*.vercel.app https://*.vercel-insights.com",
               "media-src 'self' blob:",
               "frame-src 'none'",
             ].join("; "),

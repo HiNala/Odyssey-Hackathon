@@ -121,13 +121,14 @@ function analyzeAction(action: string): ActionAnalysis {
 // ─── Momentum Calculation ───────────────────────────────────────────
 
 function calcBaseMomentum(analysis: ActionAnalysis): number {
-  const base = { weak: 4, normal: 8, strong: 13, devastating: 20 }[
+  // Tuned for 6-8 turn battles (60-90 seconds)
+  const base = { weak: 6, normal: 10, strong: 16, devastating: 24 }[
     analysis.intensity
   ];
-  const typeMod = { offensive: 1.2, defensive: 0.3, special: 1.5, neutral: 1 }[
+  const typeMod = { offensive: 1.2, defensive: 0.3, special: 1.6, neutral: 1 }[
     analysis.type
   ];
-  const variance = base * 0.4 * (Math.random() - 0.5);
+  const variance = base * 0.35 * (Math.random() - 0.5);
   return Math.round(base * typeMod + variance);
 }
 
@@ -263,18 +264,30 @@ export async function calculateStatChangesWithAI(
   const geminiResult = await callGeminiAPI(action, state);
   
   if (geminiResult) {
-    // Use Gemini's intelligent analysis
-    console.log('✨ Using Gemini AI narrative');
+    // Use Gemini's intelligent analysis, but still compute combo locally
+    console.log('[Scoring] Using Gemini AI narrative');
+    const activeId = state.activePlayer;
+    const active = state.players[activeId - 1];
+    const analysis = analyzeAction(action);
+    let comboCount = 0;
+    if (active.combo.lastActionType === analysis.type && analysis.type !== 'neutral') {
+      comboCount = active.combo.count + 1;
+    } else if (analysis.type !== 'neutral') {
+      comboCount = 1;
+    }
+    let narrative = geminiResult.narrative;
+    if (comboCount > 1) narrative += ` ${comboCount}x combo!`;
     return {
       player1: geminiResult.statChanges.player1 || {},
       player2: geminiResult.statChanges.player2 || {},
       impactType: geminiResult.analysis.impactType,
-      narrative: geminiResult.narrative,
+      narrative,
+      comboCount,
     };
   }
 
   // Fallback to local analysis
-  console.log('⚡ Using local fallback');
+  console.log('[Scoring] Using local fallback');
   return calculateStatChanges(action, state);
 }
 
@@ -389,7 +402,7 @@ export function calculateStatChanges(
     }
   } else {
     const attackerMomentum = Math.round(baseMomentum * powerMod);
-    const defenderMomentum = Math.round((-baseMomentum * 0.6) / defMod);
+    const defenderMomentum = Math.round((-baseMomentum * 0.7) / defMod);
 
     const defPenalty =
       analysis.type === 'special' ? Math.round(-3 - Math.random() * 5) : 0;
@@ -446,11 +459,11 @@ export function createEventEntry(
   };
 }
 
-/** Momentum color for UI */
+/** Momentum color for UI — uses design token colors */
 export function getMomentumColor(value: number): string {
-  if (value >= 80) return 'text-green-600';
-  if (value >= 60) return 'text-emerald-600';
-  if (value >= 40) return 'text-yellow-600';
-  if (value >= 20) return 'text-orange-600';
-  return 'text-red-600';
+  if (value >= 80) return 'text-success';
+  if (value >= 60) return 'text-success/70';
+  if (value >= 40) return 'text-warning';
+  if (value >= 20) return 'text-warning/70';
+  return 'text-danger';
 }

@@ -3,6 +3,7 @@
 import { motion } from 'framer-motion';
 import { cn } from '@/lib/utils';
 import { Sword, Shield, Sparkles, Volume2 } from 'lucide-react';
+import { GlowingEffect } from '@/components/ui/glowing-effect';
 
 export type ActionType = 'attack' | 'defend' | 'special' | 'taunt';
 
@@ -73,41 +74,58 @@ export function ActionButtons({
           const isDisabled = disabled || !canAfford;
           const Icon = action.icon;
 
+          const isAttack = action.type === 'attack';
+
           return (
-            <motion.button
-              key={action.type}
-              whileHover={isDisabled ? {} : { scale: 1.02 }}
-              whileTap={isDisabled ? {} : { scale: 0.97 }}
-              onClick={() => onAction(action.prompt)}
-              disabled={isDisabled}
-              aria-label={`${action.label}: ${action.description} (${action.energyCost} energy)`}
-              className={cn(
-                'flex-1 rounded-xl px-3 py-2.5 min-h-[68px]',
-                'flex flex-col items-center gap-1',
-                'border border-border bg-surface-raised',
-                'transition-all duration-200',
-                'disabled:opacity-25 disabled:cursor-not-allowed',
-                !isDisabled && isP1 && 'hover:border-player1-accent/30 hover:bg-player1-muted',
-                !isDisabled && !isP1 && 'hover:border-player2-accent/30 hover:bg-player2-muted',
+            <div key={action.type} className={cn('relative rounded-xl', isAttack ? 'flex-[1.3]' : 'flex-1')}>
+              {!isDisabled && (
+                <GlowingEffect
+                  spread={30}
+                  glow={false}
+                  disabled={false}
+                  proximity={48}
+                  inactiveZone={0.1}
+                  borderWidth={1}
+                />
               )}
-            >
-              <Icon
+              <motion.button
+                whileHover={isDisabled ? {} : { scale: 1.04, y: -2 }}
+                whileTap={isDisabled ? {} : { scale: 0.95 }}
+                onClick={() => onAction(action.prompt)}
+                disabled={isDisabled}
+                aria-label={`${action.label}: ${action.description} (${action.energyCost} energy)`}
                 className={cn(
-                  'w-4 h-4',
-                  isP1 ? 'text-player1-accent/70' : 'text-player2-accent/70'
-                )}
-                strokeWidth={1.5}
-              />
-              <span
-                className={cn(
-                  'text-[11px] font-semibold',
-                  isP1 ? 'text-player1-accent/90' : 'text-player2-accent/90'
+                  'relative w-full rounded-xl flex flex-col items-center gap-1',
+                  'border border-border bg-surface-raised',
+                  'transition-all duration-200',
+                  'disabled:opacity-25 disabled:cursor-not-allowed',
+                  // Attack button is visually dominant
+                  isAttack ? 'px-4 py-3 min-h-[76px]' : 'px-3 py-2.5 min-h-[68px]',
+                  !isDisabled && isAttack && isP1 && 'hover:border-player1-accent/40 hover:bg-player1-muted hover:shadow-sm hover:shadow-player1-accent/10',
+                  !isDisabled && isAttack && !isP1 && 'hover:border-player2-accent/40 hover:bg-player2-muted hover:shadow-sm hover:shadow-player2-accent/10',
+                  !isDisabled && !isAttack && isP1 && 'hover:border-player1-accent/30 hover:bg-player1-muted',
+                  !isDisabled && !isAttack && !isP1 && 'hover:border-player2-accent/30 hover:bg-player2-muted',
                 )}
               >
-                {action.label}
-              </span>
-              <span className="text-[9px] text-text-muted">{action.energyCost} NRG</span>
-            </motion.button>
+                <Icon
+                  className={cn(
+                    isAttack ? 'w-5 h-5' : 'w-4 h-4',
+                    isP1 ? 'text-player1-accent/70' : 'text-player2-accent/70'
+                  )}
+                  strokeWidth={1.5}
+                />
+                <span
+                  className={cn(
+                    'font-semibold',
+                    isAttack ? 'text-xs' : 'text-[11px]',
+                    isP1 ? 'text-player1-accent/90' : 'text-player2-accent/90'
+                  )}
+                >
+                  {action.label}
+                </span>
+                <span className="text-[9px] text-text-muted">{action.energyCost} NRG</span>
+              </motion.button>
+            </div>
           );
         })}
       </div>

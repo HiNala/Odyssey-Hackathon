@@ -150,7 +150,7 @@ export const OdysseyStream = memo(function OdysseyStream({
             exit={{ opacity: 0, y: -8 }}
             className="absolute top-3 right-3"
           >
-            <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-overlay-light backdrop-blur-sm border border-stroke-subtle">
+            <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-overlay-light backdrop-blur-sm border border-stroke-subtle">
               <div className="w-1.5 h-1.5 rounded-full bg-danger animate-pulse-subtle" />
               <span className="text-[10px] text-text-secondary font-medium tracking-wider uppercase">Live</span>
             </div>

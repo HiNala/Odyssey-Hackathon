@@ -48,7 +48,7 @@ export function getOdysseyClient(): Odyssey {
 
     try {
       odysseyClient = new Odyssey({ apiKey });
-      console.log('✅ Odyssey client initialized successfully');
+      console.log('[Odyssey] Client initialized successfully');
     } catch (error) {
       throw new Error(
         `Failed to initialize Odyssey client: ${error instanceof Error ? error.message : 'Unknown error'}`

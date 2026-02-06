@@ -6,7 +6,8 @@ import { cn } from '@/lib/utils';
 import { setupFormVariants } from '@/lib/animations';
 import { sanitizeInput, validateCharacterInput, validateWorldInput } from '@/lib/sanitize';
 import { getTestScenario, saveTestScenario } from '@/lib/storage';
-import { ImagePlus, X, Loader2, RotateCcw } from 'lucide-react';
+import { ImagePlus, X, Loader2, RotateCcw, Zap } from 'lucide-react';
+import { CHARACTER_ARCHETYPES } from '@/lib/character-library';
 
 interface SetupFormProps {
   playerId: 1 | 2;
@@ -167,6 +168,37 @@ export function SetupForm({ playerId, onSubmit, isProcessing, usedCharacter }: S
                 Load saved setup
               </button>
             )}
+          </div>
+
+          {/* Quick-select archetypes */}
+          <div className="space-y-2">
+            <label className="text-text-secondary text-xs font-medium flex items-center gap-1.5">
+              <Zap className="w-3 h-3" />
+              Quick Select
+            </label>
+            <div className="flex gap-1.5 flex-wrap">
+              {CHARACTER_ARCHETYPES
+                .filter((a) => !usedCharacter || a.character !== usedCharacter)
+                .slice(0, 6)
+                .map((archetype) => (
+                  <button
+                    key={archetype.name}
+                    onClick={() => {
+                      setCharacter(archetype.character);
+                      setWorld(archetype.world);
+                    }}
+                    disabled={isProcessing}
+                    className={cn(
+                      'text-[10px] px-2.5 py-1.5 rounded-lg border transition',
+                      'border-border bg-surface-raised hover:border-white/15',
+                      'disabled:opacity-30',
+                      isP1 ? 'text-player1-accent/80 hover:bg-player1-muted' : 'text-player2-accent/80 hover:bg-player2-muted'
+                    )}
+                  >
+                    {archetype.name}
+                  </button>
+                ))}
+            </div>
           </div>
 
           {/* Character input */}

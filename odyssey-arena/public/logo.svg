@@ -1,22 +1,33 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 320 48" fill="none">
-  <!-- Odyssey Arena wordmark - clean typographic logo -->
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 280 48" fill="none">
   <defs>
-    <linearGradient id="mark-gradient" x1="0" y1="0" x2="48" y2="48" gradientUnits="userSpaceOnUse">
+    <linearGradient id="g" x1="0" y1="0" x2="44" y2="44" gradientUnits="userSpaceOnUse">
       <stop offset="0%" stop-color="#F59E0B"/>
       <stop offset="100%" stop-color="#8B5CF6"/>
     </linearGradient>
-    <linearGradient id="text-gradient" x1="0" y1="0" x2="320" y2="0" gradientUnits="userSpaceOnUse">
-      <stop offset="0%" stop-color="#FAFAFA"/>
-      <stop offset="100%" stop-color="#A1A1AA"/>
-    </linearGradient>
   </defs>
-  <!-- Shield emblem -->
-  <path d="M24 4L40 12V24C40 33.5 33 39 24 44C15 39 8 33.5 8 24V12L24 4Z" stroke="url(#mark-gradient)" stroke-width="2" fill="none"/>
-  <path d="M24 10L34 16V24C34 30.5 30 35 24 39C18 35 14 30.5 14 24V16L24 10Z" stroke="url(#mark-gradient)" stroke-width="1.2" fill="none" opacity="0.4"/>
+  <!-- Shield mark -->
+  <path d="M22 4L38 11V23C38 32 31.5 37.5 22 42C12.5 37.5 6 32 6 23V11L22 4Z" stroke="url(#g)" stroke-width="1.8" fill="none"/>
+  <path d="M22 10L32 15.5V23C32 29.2 27.5 33.5 22 37C16.5 33.5 12 29.2 12 23V15.5L22 10Z" stroke="url(#g)" stroke-width="1" fill="none" opacity="0.35"/>
   <!-- Center diamond -->
-  <path d="M24 18L28 24L24 30L20 24Z" fill="url(#mark-gradient)" opacity="0.8"/>
-  <!-- ODYSSEY text -->
-  <text x="56" y="22" font-family="system-ui, -apple-system, 'Segoe UI', sans-serif" font-size="18" font-weight="700" letter-spacing="3" fill="url(#text-gradient)">ODYSSEY</text>
-  <!-- ARENA text -->
-  <text x="56" y="40" font-family="system-ui, -apple-system, 'Segoe UI', sans-serif" font-size="11" font-weight="500" letter-spacing="6" fill="#71717A">ARENA</text>
+  <path d="M22 17L26 23L22 29L18 23Z" fill="url(#g)" opacity="0.7"/>
+  <!-- O -->
+  <path d="M54 14.2c5.2 0 8.8 3.7 8.8 9.3s-3.6 9.3-8.8 9.3-8.8-3.7-8.8-9.3 3.6-9.3 8.8-9.3zm0 3.5c-3 0-5 2.4-5 5.8s2 5.8 5 5.8 5-2.4 5-5.8-2-5.8-5-5.8z" fill="#fafafa"/>
+  <!-- D -->
+  <path d="M67 14.6h5.5c5.3 0 8.8 3.5 8.8 8.9s-3.5 8.9-8.8 8.9H67V14.6zm3.7 3.3v11.2h1.8c3.2 0 5.1-2.2 5.1-5.6s-1.9-5.6-5.1-5.6h-1.8z" fill="#fafafa"/>
+  <!-- Y -->
+  <path d="M84 14.6h4l3.8 6.8 3.8-6.8h4l-5.9 10.4v7.4h-3.8v-7.4L84 14.6z" fill="#fafafa"/>
+  <!-- S -->
+  <path d="M102 27c0 1.8 1.4 2.8 3.4 2.8 1.8 0 3-.8 3-2.2 0-1.5-1.4-2-3.6-2.7-2.8-.9-5.2-2-5.2-5.3 0-3.3 2.7-5.4 6.2-5.4 3.7 0 6.2 2.2 6.3 5.3h-3.6c-.1-1.4-1.1-2.3-2.8-2.3-1.5 0-2.6.8-2.6 2 0 1.3 1.2 1.8 3.4 2.5 2.9.9 5.4 2 5.4 5.5 0 3.5-2.8 5.6-6.6 5.6-3.9 0-6.6-2.3-6.8-5.8H102z" fill="#fafafa"/>
+  <!-- S -->
+  <path d="M116 27c0 1.8 1.4 2.8 3.4 2.8 1.8 0 3-.8 3-2.2 0-1.5-1.4-2-3.6-2.7-2.8-.9-5.2-2-5.2-5.3 0-3.3 2.7-5.4 6.2-5.4 3.7 0 6.2 2.2 6.3 5.3h-3.6c-.1-1.4-1.1-2.3-2.8-2.3-1.5 0-2.6.8-2.6 2 0 1.3 1.2 1.8 3.4 2.5 2.9.9 5.4 2 5.4 5.5 0 3.5-2.8 5.6-6.6 5.6-3.9 0-6.6-2.3-6.8-5.8H116z" fill="#fafafa"/>
+  <!-- E -->
+  <path d="M129 14.6h11.4v3.3H132.7v4h6.8v3.2h-6.8v4.3h7.9v3.3H129V14.6z" fill="#fafafa"/>
+  <!-- Y -->
+  <path d="M143 14.6h4l3.8 6.8 3.8-6.8h4l-5.9 10.4v7.4h-3.8v-7.4L143 14.6z" fill="#fafafa"/>
+  <!-- ARENA subtitle -->
+  <path d="M170 30.8h-3l4.8-13h3.2l4.8 13h-3.1l-.9-2.6h-5l-.8 2.6zm3.4-10l-1.8 5.2h3.6l-1.8-5.2z" fill="#71717a"/>
+  <path d="M182 17.8h5.2c3 0 4.6 1.8 4.6 4.1 0 2-1 3.3-2.8 3.8l3.2 5.1h-3.4l-2.8-4.7h-1.4v4.7H182V17.8zm3.1 2.6v3.3h2c1.2 0 1.7-.7 1.7-1.7 0-.9-.5-1.6-1.7-1.6h-2z" fill="#71717a"/>
+  <path d="M195 17.8h9.4v2.6h-6.3v2.6h5.4v2.5h-5.4v2.7h6.5v2.6H195V17.8z" fill="#71717a"/>
+  <path d="M207 17.8h3.2l5.3 8.4v-8.4h3v13h-3.2l-5.3-8.4v8.4h-3V17.8z" fill="#71717a"/>
+  <path d="M222 30.8h-3l4.8-13h3.2l4.8 13h-3.1l-.9-2.6h-5l-.8 2.6zm3.4-10l-1.8 5.2h3.6l-1.8-5.2z" fill="#71717a"/>
 </svg>

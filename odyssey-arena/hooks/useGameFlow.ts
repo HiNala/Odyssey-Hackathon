@@ -1,6 +1,6 @@
 'use client';
 
-import { useCallback, useState } from 'react';
+import { useCallback, useState, useEffect, useRef } from 'react';
 import { useGame } from '@/context/GameContext';
 import { useOdysseyStream } from '@/hooks/useOdysseyStream';
 import { calculateStatChangesWithAI, createEventEntry } from '@/lib/scoring';
@@ -20,11 +20,33 @@ import type { ArenaState } from '@/types/game';
  * Combines game context + Odyssey connection into a single interface.
  * Supports "demo mode" — full game flow without live Odyssey video.
  * All Odyssey prompts flow through the prompt-templates system.
+ *
+ * Handles Odyssey connection resilience:
+ * - Syncs Odyssey disconnect events with game state (critical for HMR / reconnect)
+ * - Auto-reconnects battle stream when Odyssey reconnects
+ * - Guards against concurrent reconnection attempts
  */
 export function useGameFlow() {
   const { state, dispatch } = useGame();
   const odyssey = useOdysseyStream();
   const [isDemoMode, setIsDemoMode] = useState(false);
+  const battleStreamLockRef = useRef(false);
+
+  // ── Sync Odyssey status with game state ────────────────────────
+  // When Odyssey disconnects (HMR, network drop, stale session) while the game
+  // is active, reset the game's isConnected + isStreaming flags. This allows
+  // the battle-stream useEffect in page.tsx to re-fire and auto-reconnect.
+  useEffect(() => {
+    if (
+      !isDemoMode &&
+      odyssey.status === 'disconnected' &&
+      state.isConnected &&
+      state.phase !== 'idle'
+    ) {
+      console.log('[GameFlow] Odyssey disconnected while game active — syncing state');
+      dispatch({ type: 'DISCONNECT' });
+    }
+  }, [odyssey.status, state.isConnected, state.phase, isDemoMode, dispatch]);
 
   // ── Start Game (Idle → Setup) ──────────────────────────────────
   const startGame = useCallback(async () => {
@@ -178,11 +200,26 @@ export function useGameFlow() {
     dispatch({ type: 'RESET_GAME' });
   }, [odyssey, dispatch]);
 
+  // ── Rematch (keep characters, reset stats) ────────────────────
+  const rematch = useCallback(() => {
+    dispatch({ type: 'REMATCH' });
+  }, [dispatch]);
+
   // ── Start Battle Stream ────────────────────────────────────────
   // Attempts to start the Odyssey stream for the battle view.
-  // Retries once after a delay if the first attempt fails (e.g. reconnection needed).
+  // Uses a ref-based lock to prevent concurrent reconnection attempts.
+  // Retries with exponential backoff if the first attempt fails.
+  // Auto-dispatches CONNECT if the game state was out of sync.
   const startBattleStream = useCallback(async () => {
     if (state.phase !== 'battle' || isDemoMode) return;
+
+    // Prevent concurrent reconnection attempts (e.g. from rapid re-renders)
+    if (battleStreamLockRef.current) {
+      console.log('[GameFlow] Battle stream start already in progress — skipping');
+      return;
+    }
+    battleStreamLockRef.current = true;
+
     const p1 = state.players[0];
     const p2 = state.players[1];
 
@@ -194,20 +231,30 @@ export function useGameFlow() {
       arena
     );
 
-    const maxAttempts = 2;
+    const maxAttempts = 3;
     for (let attempt = 1; attempt <= maxAttempts; attempt++) {
       try {
         const streamId = await odyssey.startStream(prompt);
+
+        // Ensure game state knows we're connected (important after reconnection / HMR)
+        if (!state.isConnected) {
+          dispatch({ type: 'CONNECT' });
+        }
         dispatch({ type: 'START_STREAM', player: state.activePlayer, streamId });
+        battleStreamLockRef.current = false;
         return; // Success — exit
       } catch (err) {
         console.error(`Failed to start battle stream (attempt ${attempt}/${maxAttempts}):`, err);
         if (attempt < maxAttempts) {
-          // Brief delay before retry — Odyssey session may need time to clean up
-          await new Promise((r) => setTimeout(r, 2000));
+          // Exponential backoff — Odyssey session may need time to clean up
+          const delay = 2000 * attempt;
+          console.log(`[GameFlow] Retrying battle stream in ${delay}ms...`);
+          await new Promise((r) => setTimeout(r, delay));
         }
       }
     }
+
+    battleStreamLockRef.current = false;
     // All attempts failed — game continues without stream (Odyssey is best-effort)
     console.warn('[GameFlow] Battle stream could not be started. Game continues without video.');
   }, [state, odyssey, dispatch, isDemoMode]);
@@ -222,6 +269,7 @@ export function useGameFlow() {
     submitCharacter,
     submitAction,
     resetGame,
+    rematch,
     startBattleStream,
   };
 }

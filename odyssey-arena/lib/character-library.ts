@@ -1,7 +1,7 @@
 /**
  * Character Archetype Library
- * Pre-built character templates for fast demo setup.
- * Each archetype includes a vivid character and matching world description.
+ * Pre-built character + world pairs for quick demo setup.
+ * Organized by category for easy browsing.
  */
 
 export interface CharacterArchetype {
@@ -12,84 +12,84 @@ export interface CharacterArchetype {
 }
 
 export const CHARACTER_ARCHETYPES: CharacterArchetype[] = [
-  // ── Fantasy ─────────────────────────────────────
+  // ─── Fantasy ──────────────────────────────────────────
   {
     name: 'Solar Knight',
     character: 'A knight clad in molten gold armor wielding a plasma greatsword, radiating divine light and heat',
-    world: 'An ancient coliseum at dusk with crumbling marble pillars and golden light streaming through dust',
+    world: 'An ancient volcanic arena with rivers of lava and obsidian pillars',
     category: 'fantasy',
   },
   {
     name: 'Void Mage',
     character: 'A hooded figure surrounded by floating runes and crackling purple energy, manipulating the fabric of space',
-    world: 'A floating crystal palace above the clouds at sunset, translucent pillars refracting prismatic light',
+    world: 'A floating crystal palace above the clouds at sunset',
     category: 'fantasy',
   },
   {
-    name: 'Shadow Rogue',
-    character: 'A shadow assassin made of living smoke with twin daggers that drip venom and glowing violet eyes',
-    world: 'A dark enchanted forest with giant mushrooms glowing purple and mist curling between ancient trees',
+    name: 'Shadow Assassin',
+    character: 'A shadow assassin made of living smoke with twin obsidian daggers and glowing crimson eyes',
+    world: 'A dark forest clearing with giant mushrooms glowing purple and swirling mist',
     category: 'fantasy',
   },
   {
-    name: 'Dragon Sage',
-    character: 'An ancient dragon mage wreathed in blue dragonfire, scales shimmering with arcane runes',
-    world: 'A volcanic arena carved into a mountain with rivers of lava and obsidian pillars',
+    name: 'Storm Valkyrie',
+    character: 'A fierce valkyrie in silver winged armor wielding a lightning spear crackling with electricity',
+    world: 'A frozen tundra under shimmering aurora borealis with cracked ice and howling winds',
     category: 'fantasy',
   },
 
-  // ── Sci-Fi ──────────────────────────────────────
+  // ─── Sci-Fi ───────────────────────────────────────────
   {
     name: 'Nexus-7',
-    character: 'A sleek cybernetic warrior with glowing circuit patterns and adaptive plasma weapons',
-    world: 'A rain-soaked cyberpunk city rooftop at night with neon signs and holographic billboards',
+    character: 'A sleek cybernetic warrior with glowing circuit patterns and adaptive plasma weapons across the body',
+    world: 'A neon-lit cyberpunk rooftop at night with holographic billboards and rain',
     category: 'scifi',
   },
   {
     name: 'Stellar Ace',
-    character: 'An elite pilot in a form-fitting exosuit with holographic displays and energy shields',
-    world: 'A shattered space station orbiting a dying star, debris floating in zero gravity',
+    character: 'An elite pilot in a form-fitting exosuit with holographic HUD displays and energy shields',
+    world: 'A shattered space station orbiting a dying star with debris floating in zero gravity',
     category: 'scifi',
   },
 
-  // ── Supernatural ────────────────────────────────
+  // ─── Supernatural ─────────────────────────────────────
   {
     name: 'Infernus',
-    character: 'A towering demon wreathed in living fire with obsidian horns and molten veins pulsing with magma',
-    world: 'A volcanic arena with rivers of lava flowing below, ember particles floating upward',
+    character: 'A towering demon wreathed in living fire with obsidian horns and veins flowing with molten lava',
+    world: 'A hellscape of crumbling basalt with rivers of fire and a blood-red sky',
     category: 'supernatural',
   },
   {
     name: 'Lumina',
-    character: 'A radiant celestial guardian with crystalline wings that shimmer with prismatic starlight',
-    world: 'A vast frozen wasteland under northern lights, ice crystals glittering in the aurora',
+    character: 'A radiant celestial being with crystalline wings that shimmer with prismatic light and a halo of stars',
+    world: 'A celestial palace floating among the stars with crystalline floors and nebula skies',
     category: 'supernatural',
   },
 
-  // ── Modern ──────────────────────────────────────
+  // ─── Modern ───────────────────────────────────────────
   {
     name: 'Iron Fist',
-    character: 'A muscular martial artist with glowing tattoos and wrapped fists crackling with energy',
-    world: 'A underground fight cage lit by harsh overhead lights with concrete walls and steel beams',
+    character: 'A muscular martial artist with glowing tattoos and wrapped fists crackling with ki energy',
+    world: 'A rain-soaked Tokyo street at night with neon signs reflecting off the wet pavement',
     category: 'modern',
   },
   {
     name: 'Ghost Protocol',
-    character: 'A figure in sleek tech gear surrounded by floating holographic code and data streams',
-    world: 'A cyberpunk rooftop with holographic billboards and neon rain reflecting off wet surfaces',
+    character: 'A figure in sleek tactical tech gear surrounded by floating holographic code and data streams',
+    world: 'A high-tech underground bunker with screens showing cascading data and blue ambient lighting',
     category: 'modern',
   },
 ];
 
-/** Get archetypes filtered by category */
+/** Get archetypes by category */
 export function getArchetypesByCategory(category: CharacterArchetype['category']): CharacterArchetype[] {
   return CHARACTER_ARCHETYPES.filter((a) => a.category === category);
 }
 
-/** Get a random archetype, optionally excluding certain names */
-export function getRandomArchetype(exclude?: string): CharacterArchetype {
-  const available = exclude
-    ? CHARACTER_ARCHETYPES.filter((a) => a.name !== exclude)
+/** Get a random archetype that doesn't match the excluded name */
+export function getRandomArchetype(excludeName?: string): CharacterArchetype {
+  const available = excludeName
+    ? CHARACTER_ARCHETYPES.filter((a) => a.name !== excludeName)
     : CHARACTER_ARCHETYPES;
   return available[Math.floor(Math.random() * available.length)];
 }

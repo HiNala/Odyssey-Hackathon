@@ -1,7 +1,6 @@
-Add character archetype quick-select and battle stream retry logic
+Use semantic design tokens in error, loading, HUD, and prompt components
 
-- Add character-library.ts with pre-defined character archetypes (name, character, world)
-- SetupForm: quick-select buttons to auto-fill character and world from archetypes
-- Filter archetypes by player (even/odd index) so each player gets unique options
-- useGameFlow: retry battle stream start once with 2s delay on failure
-- Gracefully continue game without video if all stream attempts fail
+- Replace hardcoded white/[0.04] with fill-subtle token in loading skeletons
+- Use fill-subtle hover states in error page buttons instead of raw rgba
+- Swap white/90 and black text colors for semantic text-primary/background tokens in PromptInput
+- Reduce CenterHUD max height for better viewport fit (45vh, max 520px)

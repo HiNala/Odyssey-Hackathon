@@ -138,14 +138,7 @@ body {
   animation: slide-up 0.3s ease-out;
 }
 
-@keyframes float {
-  0%, 100% { transform: translateY(0); }
-  50% { transform: translateY(-8px); }
-}
-
-@utility animate-float {
-  animation: float 3s ease-in-out infinite;
-}
+/* float animation intentionally removed — no floating elements in this design */
 
 /* ── Focus & accessibility ────────────────────────────────────────── */
 

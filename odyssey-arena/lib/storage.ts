@@ -63,7 +63,7 @@ export function saveBattleRecord(record: BattleRecord): void {
     const trimmed = history.slice(0, 50);
     
     localStorage.setItem(STORAGE_KEYS.BATTLE_HISTORY, JSON.stringify(trimmed));
-    console.log('💾 Battle record saved to history');
+    console.log('[Storage] Battle record saved');
   } catch (error) {
     console.warn('Failed to save battle record:', error);
   }
@@ -82,7 +82,7 @@ export function getBattleHistory(): BattleRecord[] {
 export function clearBattleHistory(): void {
   try {
     localStorage.removeItem(STORAGE_KEYS.BATTLE_HISTORY);
-    console.log('🗑️ Battle history cleared');
+    console.log('[Storage] Battle history cleared');
   } catch (error) {
     console.warn('Failed to clear battle history:', error);
   }
@@ -106,7 +106,7 @@ export function updateGameStats(winner: 1 | 2 | null): void {
     }
     
     localStorage.setItem(STORAGE_KEYS.GAME_STATS, JSON.stringify(stats));
-    console.log('📊 Game stats updated');
+    console.log('[Storage] Game stats updated');
   } catch (error) {
     console.warn('Failed to update game stats:', error);
   }
@@ -137,7 +137,7 @@ export function getGameStats(): GameStats {
 export function resetGameStats(): void {
   try {
     localStorage.removeItem(STORAGE_KEYS.GAME_STATS);
-    console.log('📊 Game stats reset');
+    console.log('[Storage] Game stats reset');
   } catch (error) {
     console.warn('Failed to reset game stats:', error);
   }
@@ -153,7 +153,7 @@ interface SavedCharacters {
 export function saveLastCharacters(characters: SavedCharacters): void {
   try {
     localStorage.setItem(STORAGE_KEYS.LAST_CHARACTERS, JSON.stringify(characters));
-    console.log('💾 Last characters saved');
+    console.log('[Storage] Last characters saved');
   } catch (error) {
     console.warn('Failed to save last characters:', error);
   }
@@ -174,7 +174,7 @@ export function getLastCharacters(): SavedCharacters {
 export function saveTestScenario(scenario: TestScenario): void {
   try {
     localStorage.setItem(STORAGE_KEYS.TEST_SCENARIO, JSON.stringify(scenario));
-    console.log('🧪 Test scenario saved');
+    console.log('[Storage] Test scenario saved');
   } catch (error) {
     console.warn('Failed to save test scenario:', error);
   }
