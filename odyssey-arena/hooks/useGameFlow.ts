@@ -213,16 +213,12 @@ function applyEventToState(
     return {
       ...p,
       stats: {
-        momentum: clamp(
-          p.stats.momentum + (changes.momentum || 0),
-          0,
-          100
-        ),
+        momentum: clamp(p.stats.momentum + (changes.momentum || 0), 0, 100),
         power: clamp(p.stats.power + (changes.power || 0), 0, 100),
         defense: clamp(p.stats.defense + (changes.defense || 0), 0, 100),
         energy: clamp(p.stats.energy + (changes.energy || 0), 0, 100),
       },
     };
   }) as [typeof state.players[0], typeof state.players[1]];
-  return { ...state, players };
+  return { ...state, players, eventLog: [...state.eventLog, event] };
 }
