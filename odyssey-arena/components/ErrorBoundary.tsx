@@ -1,6 +1,7 @@
 'use client';
 
-import { Component, type ReactNode } from 'react';
+import { Component, type ReactNode, createElement } from 'react';
+import { AlertTriangle, RefreshCw } from 'lucide-react';
 
 interface Props {
   children: ReactNode;
@@ -14,7 +15,7 @@ interface State {
 
 /**
  * Catches React rendering errors and shows a recovery UI.
- * Prevents blank white screens during demo.
+ * Prevents blank screens during demo.
  */
 export class ErrorBoundary extends Component<Props, State> {
   constructor(props: Props) {
@@ -34,22 +35,27 @@ export class ErrorBoundary extends Component<Props, State> {
     if (this.state.hasError) {
       return (
         this.props.fallback || (
-          <div className="min-h-screen flex items-center justify-center bg-slate-900 p-8">
-            <div className="glass rounded-3xl p-8 max-w-md text-center space-y-4">
-              <div className="text-4xl">⚠️</div>
-              <h2 className="text-xl font-bold text-white/90">
-                Something went wrong
-              </h2>
-              <p className="text-white/50 text-sm">
-                {this.state.error?.message || 'An unexpected error occurred'}
-              </p>
+          <div className="min-h-screen flex items-center justify-center bg-background p-8">
+            <div className="rounded-2xl border border-border bg-surface p-8 max-w-md text-center space-y-5">
+              <div className="w-14 h-14 rounded-2xl bg-danger/10 border border-danger/20 flex items-center justify-center mx-auto">
+                {createElement(AlertTriangle, { className: 'w-6 h-6 text-danger/70', strokeWidth: 1.5 })}
+              </div>
+              <div className="space-y-2">
+                <h2 className="text-lg font-semibold text-text-primary">
+                  Something went wrong
+                </h2>
+                <p className="text-text-muted text-sm">
+                  {this.state.error?.message || 'An unexpected error occurred'}
+                </p>
+              </div>
               <button
                 onClick={() => {
                   this.setState({ hasError: false, error: null });
                   window.location.reload();
                 }}
-                className="px-6 py-2.5 rounded-xl bg-white/20 hover:bg-white/30 text-white font-medium text-sm transition-colors"
+                className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl border border-border bg-surface-raised hover:bg-surface text-text-secondary hover:text-text-primary font-medium text-sm transition-all"
               >
+                {createElement(RefreshCw, { className: 'w-4 h-4', strokeWidth: 1.5 })}
                 Reload Page
               </button>
             </div>
