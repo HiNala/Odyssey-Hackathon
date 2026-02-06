@@ -45,8 +45,8 @@ export function TransformationOverlay({
       exit={{ opacity: 0 }}
       transition={{ duration: 0.4 }}
       className={cn(
-        'fixed inset-0 z-[60] flex items-center justify-center',
-        `bg-gradient-to-b ${bgGradient}`,
+        'fixed inset-0 z-60 flex items-center justify-center',
+        `bg-linear-to-b ${bgGradient}`,
         'backdrop-blur-xl',
       )}
     >
