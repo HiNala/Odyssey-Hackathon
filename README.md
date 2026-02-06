@@ -25,6 +25,55 @@ Two players create characters, place them in AI-generated worlds, and battle in 
 
 ---
 
+## Architecture
+
+```mermaid
+flowchart TD
+    subgraph PLAYER["Player Input"]
+        A["Player Types Action\n(Attack / Defend / Special / Custom Prompt)"]
+    end
+
+    subgraph GEMINI["Google Gemini API"]
+        B["Analyzes Action Context"]
+        C["Generates Narrative Commentary"]
+        D["Calculates Stat Changes\n(bounded ranges)"]
+    end
+
+    subgraph ODYSSEY["Odyssey-2 Pro World Model"]
+        E["Receives Scene Prompt"]
+        F["Generates Live Video\n(frame-by-frame, ~50ms/frame)"]
+        G["Reacts to Player Actions\nin Real-Time"]
+    end
+
+    subgraph GAME["Game Engine (Next.js)"]
+        H["State Machine\n(useReducer)"]
+        I["Live Commentary Banner\n(ESPN-style)"]
+        J["Battle HUD\n(Momentum / Energy / Stats)"]
+        K["Victory Detection\n& Battle Report"]
+    end
+
+    A --> B
+    B --> C
+    B --> D
+    A --> E
+    E --> F
+    F --> G
+    G -->|"WebRTC Stream"| J
+    C -->|"Narrative Text"| I
+    D -->|"Stat Deltas"| H
+    H --> J
+    H --> K
+
+    style ODYSSEY fill:#1a1a2e,stroke:#F59E0B,stroke-width:3px,color:#fff
+    style GEMINI fill:#1a1a2e,stroke:#8B5CF6,stroke-width:2px,color:#fff
+    style PLAYER fill:#1a1a2e,stroke:#3b82f6,stroke-width:2px,color:#fff
+    style GAME fill:#1a1a2e,stroke:#22c55e,stroke-width:2px,color:#fff
+```
+
+> **Odyssey-2 Pro** is the core -- it's not just rendering video, it IS the game engine. Every frame is predicted live based on physics and narrative context, reacting to player actions in real-time via WebRTC. **Google Gemini** runs in parallel, generating vivid battle commentary and balanced stat changes that feed the game state.
+
+---
+
 ## Features
 
 | Category | Features |
@@ -38,29 +87,6 @@ Two players create characters, place them in AI-generated worlds, and battle in 
 | **Victory** | Flawless Victory / Comeback / Domination classifications + full battle report |
 | **Demo Mode** | Full game flow without API keys for instant testing |
 | **Polish** | Custom player names, stalemate prevention, auto-demo intro |
-
----
-
-## How It Works
-
-```
-Player Action
-    |
-    v
-Gemini AI --> Narrative Commentary + Stat Changes (bounded ranges)
-    |
-    v
-Odyssey-2 Pro --> Live Video Stream (reacts to action)
-    |
-    v
-Game State Update --> Commentary Banner + Event Log --> Victory Check
-```
-
-**Three AI systems orchestrated in real-time:**
-
-1. **Odyssey-2 Pro** -- Generates live video of the battle scene, reacting to each action
-2. **Google Gemini** -- Analyzes actions, generates vivid narrative commentary, calculates balanced stat changes
-3. **Commentary Engine** -- Surfaces narratives as prominent ESPN-style banners with player-colored borders and impact badges
 
 ---
 
