@@ -70,17 +70,9 @@ export function WowModeLanding({ onSkip }: WowModeLandingProps) {
           <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,rgba(99,102,241,0.12)_0%,transparent_70%)]" />
 
           <div className="relative z-10 text-center space-y-6 max-w-xl px-6">
-            <motion.div
-              animate={{ scale: [1, 1.08, 1], rotate: [0, 2, -2, 0] }}
-              transition={{ duration: 3, repeat: Infinity, ease: 'easeInOut' }}
-              className="relative mx-auto w-24 h-24"
-            >
-              <div className="absolute inset-0 rounded-full bg-player1-accent/20 blur-2xl" />
-              <div className="absolute inset-0 rounded-full bg-player2-accent/20 blur-2xl" />
-              <div className="relative w-full h-full rounded-2xl border border-white/10 bg-white/5 backdrop-blur-md flex items-center justify-center">
-                <img src="/logo.svg" alt="Odyssey Arena" className="h-10 w-auto opacity-90" />
-              </div>
-            </motion.div>
+            <div className="mx-auto">
+              <img src="/logo.svg" alt="Odyssey Arena" className="h-14 w-auto mx-auto" />
+            </div>
 
             <AnimatePresence mode="wait">
               <motion.h1
