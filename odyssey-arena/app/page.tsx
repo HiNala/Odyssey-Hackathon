@@ -281,10 +281,13 @@ export default function ArenaPage() {
           {phase === 'battle' && (
             <motion.div
               key="battle"
-              initial={{ opacity: 1, x: 0 }}
-              animate={shakeControls}
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              transition={{ duration: 0.3 }}
               className="flex-1 flex flex-col relative"
             >
+             <motion.div animate={shakeControls} className="flex-1 flex flex-col relative">
               {/* Critical Hit Overlay */}
               <AnimatePresence>
                 {latestEvent?.impactType === 'critical' && (
@@ -380,6 +383,7 @@ export default function ArenaPage() {
               <div className="text-center text-text-muted text-[10px] mb-1">
                 Use quick actions above or type your own. Creative descriptions have bigger impact.
               </div>
+             </motion.div>{/* close shake wrapper */}
             </motion.div>
           )}
 
