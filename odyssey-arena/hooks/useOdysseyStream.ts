@@ -4,18 +4,34 @@ import { useState, useEffect, useRef, useCallback } from 'react';
 import { getOdysseyClient, resetOdysseyClient } from '@/lib/odyssey-client';
 import type { ConnectionStatus } from '@/lib/types';
 
+interface StartStreamOptions {
+  prompt: string;
+  image?: File | Blob;
+  portrait?: boolean;
+}
+
 interface UseOdysseyStreamReturn {
   status: ConnectionStatus;
   error: string | null;
   mediaStream: MediaStream | null;
   streamId: string | null;
   connect: () => Promise<MediaStream>;
-  startStream: (prompt: string) => Promise<string>;
+  startStream: (promptOrOptions: string | StartStreamOptions) => Promise<string>;
   interact: (prompt: string) => Promise<void>;
   endStream: () => Promise<void>;
   disconnect: () => void;
 }
 
+/**
+ * Hook to manage the Odyssey SDK connection lifecycle.
+ *
+ * Key design decisions (from Odyssey SDK docs):
+ * - Uses event handlers in connect() for reactive UI updates
+ * - Passes portrait: true to startStream() for phone-screen format (704×1280)
+ * - Singleton pattern enforced via odyssey-client.ts (1 concurrent session limit)
+ * - Cleanup on unmount AND beforeunload (prevent 40s session block)
+ * - Retry logic with exponential backoff on connect failure
+ */
 export function useOdysseyStream(): UseOdysseyStreamReturn {
   const [status, setStatus] = useState<ConnectionStatus>('disconnected');
   const [error, setError] = useState<string | null>(null);
@@ -39,19 +55,38 @@ export function useOdysseyStream(): UseOdysseyStreamReturn {
     return clientRef.current;
   }, []);
 
-  // Cleanup on unmount - CRITICAL for Odyssey's single session limit
-  useEffect(() => {
-    return () => {
-      if (clientRef.current) {
-        try {
-          clientRef.current.disconnect();
-        } catch (err) {
-          console.warn('Error during cleanup disconnect:', err);
-        }
+  // Disconnect helper (shared by cleanup, unmount, and beforeunload)
+  const performDisconnect = useCallback(() => {
+    if (clientRef.current) {
+      try {
+        clientRef.current.disconnect();
+      } catch (err) {
+        console.warn('Error during disconnect:', err);
       }
-    };
+      clientRef.current = null;
+    }
+    resetOdysseyClient();
   }, []);
 
+  // ── Cleanup on unmount — CRITICAL for Odyssey's single session limit ──
+  useEffect(() => {
+    return () => {
+      performDisconnect();
+    };
+  }, [performDisconnect]);
+
+  // ── Cleanup on tab close / navigation — prevents 40s session block ──
+  useEffect(() => {
+    const handleBeforeUnload = () => {
+      performDisconnect();
+    };
+    window.addEventListener('beforeunload', handleBeforeUnload);
+    return () => {
+      window.removeEventListener('beforeunload', handleBeforeUnload);
+    };
+  }, [performDisconnect]);
+
+  // ── Connect to Odyssey with full event handlers (per SDK docs) ──
   const connect = useCallback(async (): Promise<MediaStream> => {
     const client = getClient();
     const maxRetries = 3;
@@ -62,16 +97,69 @@ export function useOdysseyStream(): UseOdysseyStreamReturn {
         setStatus('connecting');
         setError(null);
 
-        console.log(`🔌 Connecting to Odyssey (attempt ${attempt}/${maxRetries})...`);
-        const stream = await client.connect();
+        console.log(`[Odyssey] Connecting (attempt ${attempt}/${maxRetries})...`);
+
+        // Use the SDK's handler pattern for reactive state updates
+        const stream = await client.connect({
+          onConnected: (ms: MediaStream) => {
+            console.log('[Odyssey] onConnected — stream ready');
+            setMediaStream(ms);
+            setStatus('connected');
+          },
+          onDisconnected: () => {
+            console.log('[Odyssey] onDisconnected');
+            setMediaStream(null);
+            setStatus('disconnected');
+          },
+          onStreamStarted: (id: string) => {
+            console.log('[Odyssey] onStreamStarted:', id);
+            setStreamId(id);
+            setStatus('streaming');
+          },
+          onStreamEnded: () => {
+            console.log('[Odyssey] onStreamEnded');
+            setStreamId(null);
+            setStatus('connected');
+          },
+          onInteractAcknowledged: (prompt: string) => {
+            console.log('[Odyssey] onInteractAcknowledged:', prompt.slice(0, 60));
+          },
+          onStreamError: (reason: string, message: string) => {
+            console.error(`[Odyssey] onStreamError [${reason}]: ${message}`);
+            setError(`Stream error: ${message}`);
+            // Stream errors are recoverable — don't set status to error
+          },
+          onError: (err: Error, fatal: boolean) => {
+            console.error(`[Odyssey] onError (fatal=${fatal}):`, err.message);
+            setError(err.message);
+            if (fatal) {
+              setStatus('failed');
+              performDisconnect();
+            }
+          },
+          onStatusChange: (newStatus: string, message?: string) => {
+            console.log(`[Odyssey] onStatusChange: ${newStatus}`, message || '');
+            // Map SDK statuses to our ConnectionStatus type
+            if (newStatus === 'authenticating') setStatus('authenticating');
+            else if (newStatus === 'connecting') setStatus('connecting');
+            else if (newStatus === 'reconnecting') setStatus('reconnecting');
+            else if (newStatus === 'connected') setStatus('connected');
+            else if (newStatus === 'disconnected') setStatus('disconnected');
+            else if (newStatus === 'failed') {
+              setStatus('failed');
+              setError(message || 'Connection failed');
+            }
+          },
+        });
+
         setMediaStream(stream);
         setStatus('connected');
-        console.log('✅ Connected to Odyssey successfully');
+        console.log('[Odyssey] Connected successfully');
 
         return stream;
       } catch (err) {
         lastError = err instanceof Error ? err : new Error('Connection failed');
-        console.warn(`⚠️ Connection attempt ${attempt}/${maxRetries} failed:`, lastError.message);
+        console.warn(`[Odyssey] Connection attempt ${attempt}/${maxRetries} failed:`, lastError.message);
         
         // Wait before retry (exponential backoff)
         if (attempt < maxRetries) {
@@ -85,18 +173,42 @@ export function useOdysseyStream(): UseOdysseyStreamReturn {
     setStatus('error');
     setError(errorMessage);
     throw new Error(errorMessage);
-  }, [getClient]);
+  }, [getClient, performDisconnect]);
 
-  const startStream = useCallback(async (prompt: string): Promise<string> => {
+  // ── Start a stream — supports both text-to-video and image-to-video ──
+  // Usage: startStream("prompt") or startStream({ prompt: "...", image: file })
+  const startStream = useCallback(async (promptOrOptions: string | StartStreamOptions): Promise<string> => {
     const client = getClient();
 
     try {
-      setStatus('streaming');
       setError(null);
-
-      const id = await client.startStream({ prompt });
+      
+      // Normalize input to options object
+      const options: StartStreamOptions = typeof promptOrOptions === 'string'
+        ? { prompt: promptOrOptions }
+        : promptOrOptions;
+      
+      // Default to portrait mode for phone-screen format (704×1280)
+      const portrait = options.portrait ?? true;
+      
+      // Build stream options per Odyssey SDK docs
+      // Image-to-video: max 25MB, formats: JPEG, PNG, WebP, GIF, BMP, HEIC, HEIF, AVIF
+      const streamOptions: { prompt: string; portrait: boolean; image?: File | Blob } = {
+        prompt: options.prompt,
+        portrait,
+      };
+      
+      // Add image if provided (enables image-to-video mode)
+      if (options.image) {
+        console.log('[Odyssey] Starting image-to-video stream');
+        streamOptions.image = options.image;
+      } else {
+        console.log('[Odyssey] Starting text-to-video stream');
+      }
+      
+      const id = await client.startStream(streamOptions);
       setStreamId(id);
-
+      setStatus('streaming');
       return id;
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : 'Stream start failed';
@@ -106,6 +218,7 @@ export function useOdysseyStream(): UseOdysseyStreamReturn {
     }
   }, [getClient]);
 
+  // ── Send an interaction prompt (state descriptions, not action verbs) ──
   const interact = useCallback(async (prompt: string): Promise<void> => {
     const client = getClient();
 
@@ -115,10 +228,12 @@ export function useOdysseyStream(): UseOdysseyStreamReturn {
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : 'Interaction failed';
       setError(errorMessage);
-      throw new Error(errorMessage);
+      // Don't throw — interactions are best-effort, game continues
+      console.warn('[Odyssey] Interaction failed (non-fatal):', errorMessage);
     }
   }, [getClient]);
 
+  // ── End the current stream ──
   const endStream = useCallback(async (): Promise<void> => {
     const client = getClient();
 
@@ -129,28 +244,19 @@ export function useOdysseyStream(): UseOdysseyStreamReturn {
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : 'End stream failed';
       setError(errorMessage);
-      throw new Error(errorMessage);
+      // Don't throw — end stream failures are recoverable
+      console.warn('[Odyssey] endStream failed (non-fatal):', errorMessage);
     }
   }, [getClient]);
 
+  // ── Disconnect and reset everything ──
   const disconnect = useCallback((): void => {
-    if (clientRef.current) {
-      try {
-        clientRef.current.disconnect();
-      } catch (err) {
-        console.warn('Error during disconnect:', err);
-      }
-      clientRef.current = null;
-    }
-    
-    // Also reset the singleton
-    resetOdysseyClient();
-    
+    performDisconnect();
     setStatus('disconnected');
     setMediaStream(null);
     setStreamId(null);
     setError(null);
-  }, []);
+  }, [performDisconnect]);
 
   return {
     status,

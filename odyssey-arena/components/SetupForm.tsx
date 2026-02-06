@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { cn } from '@/lib/utils';
 import { setupFormVariants } from '@/lib/animations';
@@ -10,29 +10,55 @@ interface SetupFormProps {
   playerId: 1 | 2;
   onSubmit: (character: string, world: string) => void;
   isProcessing: boolean;
+  /** Characters already selected by the other player (to discourage duplicates) */
+  usedCharacter?: string;
 }
 
-const PRESETS = {
-  characters: [
-    'A cyberpunk samurai with glowing red eyes',
-    'A fierce valkyrie in golden armor',
-    'An ancient dragon mage wielding fire',
-    'A shadow assassin made of living smoke',
-  ],
-  worlds: [
-    'Neon-lit Tokyo streets at night, rain falling',
-    'A floating crystal palace above the clouds',
-    'An ancient volcanic arena with lava streams',
-    'A frozen wasteland under aurora borealis',
-  ],
-};
+// ── Two distinct preset pools so P1 and P2 get different suggestions ──
 
-export function SetupForm({ playerId, onSubmit, isProcessing }: SetupFormProps) {
+const P1_CHARACTER_PRESETS = [
+  'A cyberpunk samurai with glowing red eyes and a plasma katana',
+  'A fierce valkyrie in golden winged armor wielding a lightning spear',
+  'An ancient dragon mage wreathed in blue dragonfire',
+  'A shadow assassin made of living smoke with twin daggers',
+];
+
+const P2_CHARACTER_PRESETS = [
+  'A neon-punk hacker with holographic armor and a data blade',
+  'A celestial guardian clad in crystal armor radiating starlight',
+  'A volcanic titan forged from obsidian with molten fists',
+  'A spectral knight bound in ethereal chains with a ghostly greatsword',
+];
+
+const P1_WORLD_PRESETS = [
+  'Neon-lit Tokyo streets at night, rain falling on holograms',
+  'A floating crystal palace above the clouds at sunset',
+  'An ancient volcanic arena with rivers of lava',
+  'A frozen wasteland under shimmering aurora borealis',
+];
+
+const P2_WORLD_PRESETS = [
+  'A cyberpunk rooftop with holographic billboards and neon rain',
+  'A sunken temple deep underwater with bioluminescent coral',
+  'A dark forest clearing with giant mushrooms glowing purple',
+  'A shattered space station orbiting a dying star',
+];
+
+export function SetupForm({ playerId, onSubmit, isProcessing, usedCharacter }: SetupFormProps) {
   const [character, setCharacter] = useState('');
   const [world, setWorld] = useState('');
+  const [error, setError] = useState('');
   const isP1 = playerId === 1;
 
-  const [error, setError] = useState('');
+  // ── Reset form state when playerId changes (P1 → P2 transition) ──
+  useEffect(() => {
+    setCharacter('');
+    setWorld('');
+    setError('');
+  }, [playerId]);
+
+  const characterPresets = isP1 ? P1_CHARACTER_PRESETS : P2_CHARACTER_PRESETS;
+  const worldPresets = isP1 ? P1_WORLD_PRESETS : P2_WORLD_PRESETS;
 
   const handleSubmit = () => {
     if (isProcessing) return;
@@ -40,6 +66,13 @@ export function SetupForm({ playerId, onSubmit, isProcessing }: SetupFormProps) 
     if (!charResult.valid) { setError(charResult.error || ''); return; }
     const worldResult = validateWorldInput(world);
     if (!worldResult.valid) { setError(worldResult.error || ''); return; }
+
+    // Warn if character matches the other player's
+    if (usedCharacter && character.trim().toLowerCase() === usedCharacter.trim().toLowerCase()) {
+      setError('Choose a different character than Player 1!');
+      return;
+    }
+
     setError('');
     onSubmit(sanitizeInput(character, 200), sanitizeInput(world, 200));
   };
@@ -63,7 +96,9 @@ export function SetupForm({ playerId, onSubmit, isProcessing }: SetupFormProps) 
           >
             Player {playerId} Setup
           </h3>
-          <p className="text-white/50 text-xs">Describe your character and world</p>
+          <p className="text-white/50 text-xs">
+            {isP1 ? 'Create your champion and battleground' : 'Choose a challenger to face Player 1'}
+          </p>
         </div>
 
         {/* Character Input */}
@@ -73,14 +108,14 @@ export function SetupForm({ playerId, onSubmit, isProcessing }: SetupFormProps) 
             type="text"
             value={character}
             onChange={(e) => setCharacter(e.target.value)}
-            placeholder="e.g. A cyberpunk samurai with glowing eyes"
+            placeholder={isP1 ? 'e.g. A cyberpunk samurai with glowing eyes' : 'e.g. A volcanic titan with molten fists'}
             maxLength={200}
             disabled={isProcessing}
             aria-label="Character description"
             className="w-full px-4 py-3 rounded-xl glass text-white text-sm placeholder:text-white/30 outline-none focus:ring-2 focus:ring-white/20 disabled:opacity-50"
           />
           <div className="flex gap-1.5 flex-wrap">
-            {PRESETS.characters.map((p) => (
+            {characterPresets.map((p) => (
               <button
                 key={p}
                 onClick={() => setCharacter(p)}
@@ -100,14 +135,14 @@ export function SetupForm({ playerId, onSubmit, isProcessing }: SetupFormProps) 
             type="text"
             value={world}
             onChange={(e) => setWorld(e.target.value)}
-            placeholder="e.g. A volcanic arena at dusk"
+            placeholder={isP1 ? 'e.g. A volcanic arena at dusk' : 'e.g. A sunken temple underwater'}
             maxLength={200}
             disabled={isProcessing}
             aria-label="World description"
             className="w-full px-4 py-3 rounded-xl glass text-white text-sm placeholder:text-white/30 outline-none focus:ring-2 focus:ring-white/20 disabled:opacity-50"
           />
           <div className="flex gap-1.5 flex-wrap">
-            {PRESETS.worlds.map((p) => (
+            {worldPresets.map((p) => (
               <button
                 key={p}
                 onClick={() => setWorld(p)}
